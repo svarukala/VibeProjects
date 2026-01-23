@@ -1,0 +1,27 @@
+{
+    "azure": {
+        "clientId": "7d13ea98-5700-4895-8024-19c4b31bfa86",
+        "tenantId": "144b8c80-398d-405e-8055-fc9a9d5013f8",
+        "redirectUri": "http://localhost:8000"
+    },
+    "openai": {
+        "endpoint": "https://api.openai.com/v1",
+        "model": "gpt-4",
+        "maxTokens": 4096
+    },
+    "analysis": {
+        "sharepoint": {
+            "largeFileSizeThreshold": 83886080,
+            "highFileCountThreshold": 1000
+        },
+        "connectors": {
+            "maxRecommendedCount": 5,
+            "minDescriptionLength": 20,
+            "maxDescriptionLength": 500
+        }
+    },
+    "ui": {
+        "maxInstructionsPreviewLength": 500,
+        "editorTheme": "vs-light"
+    }
+}

@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Fluent UI inspired styles */
+@layer base {
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    line-height: 1.428571429;
+    color: #323130;
+    background-color: #faf9f8;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer components {
+  /* Fluent UI Button styles */
+  .btn-fluent {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-sm border border-transparent transition-all duration-200 ease-in-out;
+    min-height: 32px;
+    background: linear-gradient(to bottom, #ffffff 0%, #f3f2f1 100%);
+    border: 1px solid #d2d0ce;
+    color: #323130;
+  }
+  
+  .btn-fluent:hover {
+    @apply shadow-fluent;
+    background: linear-gradient(to bottom, #f3f2f1 0%, #edebe9 100%);
+    border-color: #c7c6c4;
+  }
+  
+  .btn-fluent:active {
+    background: linear-gradient(to bottom, #edebe9 0%, #e1dfdd 100%);
+    border-color: #a19f9d;
+  }
+  
+  .btn-primary {
+    @apply bg-ms-blue-500 text-white border-ms-blue-500;
+  }
+  
+  .btn-primary:hover {
+    @apply bg-ms-blue-600 border-ms-blue-600;
+  }
+  
+  .btn-primary:active {
+    @apply bg-ms-blue-700 border-ms-blue-700;
+  }
+  
+  /* Fluent UI Card styles */
+  .card-fluent {
+    @apply bg-white rounded-sm border border-ms-neutral-200 shadow-fluent;
+    padding: 16px;
+  }
+  
+  /* Fluent UI Input styles */
+  .input-fluent {
+    @apply w-full px-3 py-2 text-sm border border-ms-neutral-300 rounded-sm bg-white;
+    min-height: 32px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  
+  .input-fluent:focus {
+    @apply outline-none border-ms-blue-500;
+    box-shadow: 0 0 0 1px #0078d4;
+  }
+  
+  /* File tree styles */
+  .file-tree-item {
+    @apply flex items-center px-2 py-1 text-sm cursor-pointer rounded-sm transition-colors duration-150;
+  }
+  
+  .file-tree-item:hover {
+    @apply bg-ms-neutral-100;
+  }
+  
+  .file-tree-item.selected {
+    @apply bg-ms-blue-50 text-ms-blue-700;
+  }
+  
+  /* Drop zone styles */
+  .drop-zone {
+    @apply border-2 border-dashed border-ms-neutral-300 rounded-lg p-8 text-center transition-colors duration-200;
+  }
+  
+  .drop-zone.active {
+    @apply border-ms-blue-500 bg-ms-blue-50;
+  }
+  
+  /* Scrollbar styles */
+  .scrollbar-fluent {
+    scrollbar-width: thin;
+    scrollbar-color: #c7c6c4 transparent;
+  }
+  
+  .scrollbar-fluent::-webkit-scrollbar {
+    width: 14px;
+  }
+  
+  .scrollbar-fluent::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-fluent::-webkit-scrollbar-thumb {
+    background-color: #c7c6c4;
+    border-radius: 7px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  
+  .scrollbar-fluent::-webkit-scrollbar-thumb:hover {
+    background-color: #a19f9d;
+  }
+}
+
+/* Syntax highlighting adjustments */
+.syntax-highlight {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.45;
+}

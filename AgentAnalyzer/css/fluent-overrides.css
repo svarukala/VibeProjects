@@ -1,0 +1,207 @@
+/* AgentAnalyzer - Fluent UI Overrides */
+
+/* Button Customizations */
+fluent-button::part(control) {
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    border-radius: var(--radius-small);
+    transition: all 0.1s ease;
+}
+
+fluent-button[appearance="accent"]::part(control) {
+    background-color: var(--color-brand-primary);
+}
+
+fluent-button[appearance="accent"]::part(control):hover {
+    background-color: var(--color-brand-primary-hover);
+}
+
+fluent-button[appearance="subtle"]::part(control) {
+    color: var(--color-neutral-foreground-secondary);
+}
+
+fluent-button[appearance="subtle"]::part(control):hover {
+    color: var(--color-neutral-foreground);
+    background-color: var(--color-neutral-background-alt);
+}
+
+fluent-button[disabled]::part(control) {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Checkbox Customizations */
+fluent-checkbox::part(control) {
+    border-radius: var(--radius-small);
+}
+
+fluent-checkbox::part(label) {
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    color: var(--color-neutral-foreground);
+}
+
+fluent-checkbox[disabled]::part(label) {
+    color: var(--color-neutral-foreground-secondary);
+    opacity: 0.6;
+}
+
+/* Divider */
+fluent-divider {
+    margin: var(--spacing-m) 0;
+}
+
+/* Tabs */
+fluent-tabs {
+    --tab-panel-padding: var(--spacing-m);
+}
+
+fluent-tab::part(content) {
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+}
+
+fluent-tab[aria-selected="true"]::part(content) {
+    font-weight: 600;
+    color: var(--color-brand-primary);
+}
+
+fluent-tab-panel {
+    padding: var(--spacing-m);
+}
+
+/* Progress Ring */
+fluent-progress-ring {
+    --progress-ring-size: 48px;
+    --progress-ring-stroke-width: 4px;
+    --progress-ring-indicator-color: var(--color-brand-primary);
+}
+
+/* Text Field */
+fluent-text-field::part(root) {
+    border-radius: var(--radius-small);
+}
+
+fluent-text-field::part(control) {
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+}
+
+/* Dialog */
+fluent-dialog::part(control) {
+    border-radius: var(--radius-medium);
+    box-shadow: var(--shadow-8);
+}
+
+fluent-dialog::part(overlay) {
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Tooltip */
+fluent-tooltip::part(tooltip) {
+    font-family: var(--font-family);
+    font-size: var(--font-size-small);
+    background-color: var(--color-neutral-foreground);
+    color: white;
+    border-radius: var(--radius-small);
+    padding: var(--spacing-xs) var(--spacing-s);
+}
+
+/* Badge */
+fluent-badge {
+    font-family: var(--font-family);
+    font-size: var(--font-size-small);
+    border-radius: var(--radius-small);
+}
+
+/* Menu */
+fluent-menu::part(positioned-region) {
+    border-radius: var(--radius-small);
+    box-shadow: var(--shadow-4);
+}
+
+fluent-menu-item::part(content) {
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+}
+
+/* Accordion */
+fluent-accordion-item::part(heading) {
+    font-family: var(--font-family);
+    font-weight: 600;
+}
+
+fluent-accordion-item::part(region) {
+    padding: var(--spacing-m);
+}
+
+/* Card */
+fluent-card {
+    border-radius: var(--radius-medium);
+    box-shadow: var(--shadow-2);
+}
+
+/* Tree View */
+fluent-tree-item::part(content-region) {
+    font-family: var(--font-family);
+    font-size: var(--font-size-small);
+}
+
+fluent-tree-item[selected]::part(positioning-region) {
+    background-color: rgba(0, 120, 212, 0.1);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--color-neutral-stroke-strong);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-neutral-foreground-secondary);
+}
+
+/* Focus States */
+*:focus-visible {
+    outline: 2px solid var(--color-brand-primary);
+    outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+    background-color: rgba(0, 120, 212, 0.3);
+}
+
+/* Animation Utilities */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slide-in {
+    animation: slideIn 0.2s ease-out;
+}

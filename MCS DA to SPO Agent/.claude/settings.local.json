@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:developer.microsoft.com)",
+      "Bash(powershell -Command \"Expand-Archive -Path ''FSI-Dev agent-TeamsApp \\(1\\).zip'' -DestinationPath ''./extracted_zip'' -Force; Get-ChildItem -Recurse ''./extracted_zip''\")",
+      "Bash(powershell -ExecutionPolicy Bypass -Command \"Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory\\(''C:\\\\vibe\\\\MCS DA to SPO Agent\\\\Sample\\\\FSI-Dev agent-TeamsApp \\(1\\).zip'', ''C:\\\\vibe\\\\MCS DA to SPO Agent\\\\Sample\\\\extracted_zip''\\)\")",
+      "Bash(powershell:*)"
+    ]
+  }
+}

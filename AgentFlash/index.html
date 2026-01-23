@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Flash - AI-Powered Flash Cards</title>
+    <meta name="description" content="Create AI-generated flash cards on any topic for efficient learning">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo" id="logo-home">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    <span class="logo-text">Agent Flash</span>
+                </div>
+                <nav class="header-nav">
+                    <button class="nav-btn" id="btn-history" title="View History">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>History</span>
+                    </button>
+                    <button class="nav-btn" id="btn-settings" title="Settings">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                        <span>Settings</span>
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Home View -->
+            <section id="view-home" class="view active">
+                <div class="home-container">
+                    <div class="hero">
+                        <h1 class="hero-title">Learn Anything,<br><span class="highlight">One Card at a Time</span></h1>
+                        <p class="hero-subtitle">Enter any topic and let AI generate thought-provoking flash cards to accelerate your learning.</p>
+                    </div>
+
+                    <form id="topic-form" class="topic-form">
+                        <div class="form-group">
+                            <label for="topic-input" class="form-label">What do you want to learn?</label>
+                            <input
+                                type="text"
+                                id="topic-input"
+                                class="form-input"
+                                placeholder="e.g., Quantum Computing, JavaScript Promises, World War II..."
+                                autocomplete="off"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="card-count" class="form-label">Number of Cards</label>
+                                <select id="card-count" class="form-select">
+                                    <option value="5">5 cards</option>
+                                    <option value="10" selected>10 cards</option>
+                                    <option value="15">15 cards</option>
+                                    <option value="20">20 cards</option>
+                                    <option value="25">25 cards</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-large" id="btn-generate">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                            </svg>
+                            <span>Generate Flash Cards</span>
+                        </button>
+                    </form>
+
+                    <div class="quick-topics">
+                        <p class="quick-topics-label">Quick start:</p>
+                        <div class="topic-chips">
+                            <button class="chip" data-topic="Machine Learning Basics">Machine Learning</button>
+                            <button class="chip" data-topic="JavaScript ES6 Features">JavaScript ES6</button>
+                            <button class="chip" data-topic="Solar System Planets">Solar System</button>
+                            <button class="chip" data-topic="Human Anatomy">Human Anatomy</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Loading View -->
+            <section id="view-loading" class="view">
+                <div class="loading-container">
+                    <div class="loading-spinner">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                        </svg>
+                    </div>
+                    <h2 class="loading-title">Generating Flash Cards</h2>
+                    <p class="loading-subtitle" id="loading-topic">Searching the web and creating questions...</p>
+                    <div class="loading-progress">
+                        <div class="loading-bar"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Study View -->
+            <section id="view-study" class="view">
+                <div class="study-container">
+                    <div class="study-header">
+                        <h2 class="study-topic" id="study-topic">Topic Name</h2>
+                        <div class="study-progress">
+                            <span id="card-current">1</span> of <span id="card-total">10</span>
+                        </div>
+                    </div>
+
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="study-progress-bar"></div>
+                    </div>
+
+                    <div class="flashcard-container">
+                        <div class="flashcard" id="flashcard">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front">
+                                    <div class="card-label">Question</div>
+                                    <p class="card-content" id="card-question">Question goes here</p>
+                                    <div class="card-hint">Click to reveal answer</div>
+                                </div>
+                                <div class="flashcard-back">
+                                    <div class="card-label">Answer</div>
+                                    <p class="card-content" id="card-answer">Answer goes here</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="answer-buttons" id="answer-buttons">
+                        <button class="btn btn-wrong" id="btn-wrong" disabled>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            <span>Got it Wrong</span>
+                        </button>
+                        <button class="btn btn-correct" id="btn-correct" disabled>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Got it Right</span>
+                        </button>
+                    </div>
+
+                    <div class="study-score">
+                        <div class="score-item correct">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span id="current-correct">0</span>
+                        </div>
+                        <div class="score-item wrong">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            <span id="current-wrong">0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results View -->
+            <section id="view-results" class="view">
+                <div class="results-container">
+                    <div class="results-header">
+                        <h2 class="results-title">Session Complete!</h2>
+                        <p class="results-topic" id="results-topic">Topic Name</p>
+                    </div>
+
+                    <div class="score-display">
+                        <div class="score-ring">
+                            <svg viewBox="0 0 120 120">
+                                <circle class="score-ring-bg" cx="60" cy="60" r="54" />
+                                <circle class="score-ring-progress" id="score-ring-progress" cx="60" cy="60" r="54" />
+                            </svg>
+                            <div class="score-value">
+                                <span id="score-percentage">0</span>%
+                            </div>
+                        </div>
+                        <div class="score-details">
+                            <div class="score-detail correct">
+                                <span class="score-number" id="final-correct">0</span>
+                                <span class="score-label">Correct</span>
+                            </div>
+                            <div class="score-divider"></div>
+                            <div class="score-detail wrong">
+                                <span class="score-number" id="final-wrong">0</span>
+                                <span class="score-label">Wrong</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="results-message" id="results-message">Great job!</p>
+
+                    <div class="results-actions">
+                        <button class="btn btn-secondary" id="btn-review-cards">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <span>Review Cards</span>
+                        </button>
+                        <button class="btn btn-secondary" id="btn-study-again">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                            <span>Study Again</span>
+                        </button>
+                        <button class="btn btn-primary" id="btn-new-topic">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span>New Topic</span>
+                        </button>
+                    </div>
+
+                    <!-- Card Review Section -->
+                    <div class="card-review" id="card-review" style="display: none;">
+                        <h3 class="review-title">Card Review</h3>
+                        <div class="review-list" id="review-list"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- History View -->
+            <section id="view-history" class="view">
+                <div class="history-container">
+                    <div class="history-header">
+                        <h2 class="history-title">Study History</h2>
+                        <button class="btn btn-text" id="btn-clear-history">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            <span>Clear All</span>
+                        </button>
+                    </div>
+
+                    <div class="history-list" id="history-list">
+                        <!-- History items will be rendered here -->
+                    </div>
+
+                    <div class="history-empty" id="history-empty" style="display: none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                        <p>No study sessions yet</p>
+                        <button class="btn btn-primary" id="btn-start-first">Start Learning</button>
+                    </div>
+
+                    <button class="btn btn-secondary btn-back" id="btn-back-home">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        <span>Back to Home</span>
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Settings Modal -->
+        <div class="modal-overlay" id="settings-modal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2 class="modal-title">API Settings</h2>
+                    <button class="modal-close" id="btn-close-settings">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Provider Selection -->
+                    <div class="form-group">
+                        <label class="form-label">API Provider</label>
+                        <div class="provider-selector">
+                            <label class="provider-option">
+                                <input type="radio" name="api-provider" value="claude" id="provider-claude" checked>
+                                <span class="provider-label">Claude (Anthropic)</span>
+                            </label>
+                            <label class="provider-option">
+                                <input type="radio" name="api-provider" value="openai" id="provider-openai">
+                                <span class="provider-label">OpenAI</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Claude Settings -->
+                    <div id="claude-settings" class="provider-settings">
+                        <div class="form-group">
+                            <label for="claude-api-key" class="form-label">Claude API Key</label>
+                            <div class="input-with-toggle">
+                                <input
+                                    type="password"
+                                    id="claude-api-key"
+                                    class="form-input"
+                                    placeholder="sk-ant-..."
+                                >
+                                <button type="button" class="toggle-visibility" id="toggle-claude-key">
+                                    <svg class="icon-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <svg class="icon-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <p class="form-hint">Your API key is stored locally and never sent to any server except Anthropic's API.</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="claude-endpoint" class="form-label">API Endpoint</label>
+                            <input
+                                type="url"
+                                id="claude-endpoint"
+                                class="form-input"
+                                placeholder="https://api.anthropic.com/v1/messages"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="claude-model" class="form-label">Model</label>
+                            <select id="claude-model" class="form-select">
+                                <option value="claude-sonnet-4-20250514">Claude Sonnet 4 (Recommended)</option>
+                                <option value="claude-opus-4-20250514">Claude Opus 4</option>
+                                <option value="claude-haiku-3-5-20241022">Claude 3.5 Haiku</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- OpenAI Settings -->
+                    <div id="openai-settings" class="provider-settings" style="display: none;">
+                        <div class="form-group">
+                            <label for="openai-api-key" class="form-label">OpenAI API Key</label>
+                            <div class="input-with-toggle">
+                                <input
+                                    type="password"
+                                    id="openai-api-key"
+                                    class="form-input"
+                                    placeholder="sk-..."
+                                >
+                                <button type="button" class="toggle-visibility" id="toggle-openai-key">
+                                    <svg class="icon-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <svg class="icon-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <p class="form-hint">Your API key is stored locally and never sent to any server except OpenAI's API.</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="openai-model" class="form-label">Model</label>
+                            <select id="openai-model" class="form-select">
+                                <option value="gpt-4o">GPT-4o (Recommended)</option>
+                                <option value="gpt-4o-mini">GPT-4o Mini</option>
+                                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-actions">
+                        <button class="btn btn-secondary" id="btn-test-connection">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            <span>Test Connection</span>
+                        </button>
+                        <button class="btn btn-primary" id="btn-save-settings">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                            <span>Save Settings</span>
+                        </button>
+                    </div>
+
+                    <div class="connection-status" id="connection-status" style="display: none;">
+                        <span class="status-icon"></span>
+                        <span class="status-message"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirm Modal -->
+        <div class="modal-overlay" id="confirm-modal">
+            <div class="modal modal-small">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="confirm-title">Confirm</h2>
+                </div>
+                <div class="modal-body">
+                    <p id="confirm-message">Are you sure?</p>
+                    <div class="confirm-actions">
+                        <button class="btn btn-secondary" id="btn-confirm-cancel">Cancel</button>
+                        <button class="btn btn-danger" id="btn-confirm-ok">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toast-container"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/flashcard.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

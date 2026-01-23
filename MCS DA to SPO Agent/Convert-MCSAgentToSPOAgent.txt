@@ -1,0 +1,1052 @@
+<#
+.SYNOPSIS
+    Converts a Microsoft Copilot Studio (MCS) declarative agent zip file to a SharePoint .agent file.
+
+.DESCRIPTION
+    This utility extracts a declarative agent zip file exported from Microsoft Copilot Studio,
+    resolves SharePoint URLs to their corresponding IDs using Microsoft Graph API,
+    and generates a SharePoint-compatible .agent file.
+
+.PARAMETER ZipFilePath
+    Path to the MCS agent zip file to convert.
+
+.PARAMETER OutputPath
+    Optional. Output directory for the .agent file. Defaults to the same directory as the zip file.
+
+.EXAMPLE
+    .\Convert-MCSAgentToSPOAgent.ps1 -ZipFilePath "C:\Agents\MyAgent.zip"
+
+.EXAMPLE
+    .\Convert-MCSAgentToSPOAgent.ps1 -ZipFilePath "C:\Agents\MyAgent.zip" -OutputPath "C:\Output"
+
+.NOTES
+    Requires Microsoft.Graph PowerShell modules installed at system level:
+    - Microsoft.Graph.Authentication
+    - Microsoft.Graph.Sites
+    - Microsoft.Graph.Files
+
+    Install modules (run PowerShell as Administrator):
+    Install-Module Microsoft.Graph -Scope AllUsers
+
+    Modules are loaded from: C:\Program Files\PowerShell\Modules
+#>
+
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $true, Position = 0, HelpMessage = "Path to the MCS agent zip file")]
+    [ValidateScript({ Test-Path $_ -PathType Leaf })]
+    [string]$ZipFilePath,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Output directory for the .agent file")]
+    [string]$OutputPath
+)
+
+#region Module Configuration
+
+# System-level module path for Microsoft Graph modules
+$script:SystemModulePath = "C:\Program Files\PowerShell\Modules"
+
+function Test-RequiredModules {
+    <#
+    .SYNOPSIS
+        Checks if required Microsoft.Graph modules are installed at system level.
+    #>
+    $requiredModules = @(
+        "Microsoft.Graph.Authentication",
+        "Microsoft.Graph.Sites",
+        "Microsoft.Graph.Files"
+    )
+
+    $missingModules = @()
+
+    foreach ($moduleName in $requiredModules) {
+        $modulePath = Join-Path $script:SystemModulePath $moduleName
+        if (-not (Test-Path $modulePath)) {
+            $missingModules += $moduleName
+        }
+    }
+
+    if ($missingModules.Count -gt 0) {
+        Write-Host "Missing required modules in system path ($script:SystemModulePath):" -ForegroundColor Red
+        $missingModules | ForEach-Object { Write-Host "  - $_" -ForegroundColor Yellow }
+        Write-Host "`nInstall them using (run as Administrator):" -ForegroundColor Cyan
+        Write-Host "  Install-Module Microsoft.Graph -Scope AllUsers" -ForegroundColor White
+        return $false
+    }
+
+    return $true
+}
+
+function Import-GraphModules {
+    <#
+    .SYNOPSIS
+        Imports Microsoft.Graph modules from the system-level path.
+    #>
+    $requiredModules = @(
+        "Microsoft.Graph.Authentication",
+        "Microsoft.Graph.Sites",
+        "Microsoft.Graph.Files"
+    )
+
+    foreach ($moduleName in $requiredModules) {
+        $modulePath = Join-Path $script:SystemModulePath $moduleName
+        Write-Verbose "Importing module from: $modulePath"
+
+        try {
+            Import-Module $modulePath -Force -ErrorAction Stop
+            Write-Verbose "  Successfully imported: $moduleName"
+        }
+        catch {
+            throw "Failed to import module '$moduleName' from '$modulePath': $_"
+        }
+    }
+}
+
+#endregion
+
+#region Zip Extraction
+
+function Expand-AgentZip {
+    <#
+    .SYNOPSIS
+        Extracts the MCS agent zip file to a temporary directory.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ZipPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$DestinationPath
+    )
+
+    try {
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($ZipPath, $DestinationPath)
+
+        # Validate required files exist
+        $declarativeAgentPath = Join-Path $DestinationPath "declarativeAgent_0.json"
+        $colorIconPath = Join-Path $DestinationPath "color.png"
+
+        if (-not (Test-Path $declarativeAgentPath)) {
+            throw "declarativeAgent_0.json not found in zip file"
+        }
+
+        return @{
+            DeclarativeAgentPath = $declarativeAgentPath
+            ColorIconPath        = if (Test-Path $colorIconPath) { $colorIconPath } else { $null }
+            TempDirectory        = $DestinationPath
+        }
+    }
+    catch {
+        throw "Failed to extract zip file: $_"
+    }
+}
+
+#endregion
+
+#region MS Graph Authentication
+
+function Connect-ToMSGraph {
+    <#
+    .SYNOPSIS
+        Connects to Microsoft Graph using interactive or device code flow.
+    #>
+    $requiredScopes = @(
+        "Sites.Read.All",
+        "Files.Read.All"
+    )
+
+    Write-Host "`nConnecting to Microsoft Graph..." -ForegroundColor Cyan
+    Write-Host "Required permissions: $($requiredScopes -join ', ')" -ForegroundColor Gray
+
+    try {
+        # Check if already connected with required scopes
+        $context = Get-MgContext
+        if ($context) {
+            $hasRequiredScopes = $true
+            foreach ($scope in $requiredScopes) {
+                if ($context.Scopes -notcontains $scope) {
+                    $hasRequiredScopes = $false
+                    break
+                }
+            }
+
+            if ($hasRequiredScopes) {
+                Write-Host "Already connected as: $($context.Account)" -ForegroundColor Green
+                # Verify connection actually works with a test call
+                Write-Host "Verifying connection..." -ForegroundColor Gray
+                try {
+                    $verifyUri = "https://graph.microsoft.com/v1.0/me"
+                    Write-Host "    GET $verifyUri" -ForegroundColor DarkGray
+                    $null = Invoke-MgGraphRequest -Uri $verifyUri -Method GET -ErrorAction Stop
+                    Write-Host "Connection verified!" -ForegroundColor Green
+                    return $true
+                }
+                catch {
+                    Write-Host "Connection stale, reconnecting..." -ForegroundColor Yellow
+                    Disconnect-MgGraph -ErrorAction SilentlyContinue | Out-Null
+                }
+            }
+            else {
+                Write-Host "Reconnecting with required scopes..." -ForegroundColor Yellow
+                Disconnect-MgGraph -ErrorAction SilentlyContinue | Out-Null
+            }
+        }
+
+        # Prompt user for authentication method
+        Write-Host "`n========================================" -ForegroundColor Yellow
+        Write-Host "  AUTHENTICATION REQUIRED" -ForegroundColor Yellow
+        Write-Host "========================================" -ForegroundColor Yellow
+        Write-Host "1. Interactive (browser popup) [Recommended]" -ForegroundColor White
+        Write-Host "2. Device Code (manual entry)" -ForegroundColor White
+        Write-Host "========================================" -ForegroundColor Yellow
+
+        $choice = Read-Host "Select authentication method [1]"
+        if ([string]::IsNullOrWhiteSpace($choice)) { $choice = "1" }
+
+        switch ($choice) {
+            "2" {
+                # Device code flow
+                Write-Host "`n========================================" -ForegroundColor Cyan
+                Write-Host "  DEVICE CODE AUTHENTICATION" -ForegroundColor Cyan
+                Write-Host "========================================" -ForegroundColor Cyan
+                Write-Host "1. Go to: https://microsoft.com/devicelogin" -ForegroundColor Yellow
+                Write-Host "2. Enter the code shown below" -ForegroundColor Yellow
+                Write-Host "3. Complete sign-in in browser" -ForegroundColor Yellow
+                Write-Host "========================================`n" -ForegroundColor Cyan
+
+                # Set information preference to show device code
+                $originalInfoPref = $global:InformationPreference
+                $global:InformationPreference = 'Continue'
+
+                # Connect with device code - don't pipe output to avoid breaking auth
+                Connect-MgGraph -Scopes $requiredScopes -UseDeviceCode -ErrorAction Stop
+
+                $global:InformationPreference = $originalInfoPref
+            }
+            default {
+                # Interactive browser authentication
+                Write-Host "`nOpening browser for authentication..." -ForegroundColor Cyan
+                Connect-MgGraph -Scopes $requiredScopes -NoWelcome -ErrorAction Stop
+            }
+        }
+
+        # Verify connection
+        $context = Get-MgContext
+        if ($context) {
+            Write-Host "`nConnected as: $($context.Account)" -ForegroundColor Green
+
+            # Test the connection with an actual API call
+            Write-Host "Verifying API access..." -ForegroundColor Gray
+            try {
+                $verifyUri = "https://graph.microsoft.com/v1.0/me"
+                Write-Host "    GET $verifyUri" -ForegroundColor DarkGray
+                $null = Invoke-MgGraphRequest -Uri $verifyUri -Method GET -ErrorAction Stop
+                Write-Host "API access verified!" -ForegroundColor Green
+                return $true
+            }
+            catch {
+                throw "Connected but API calls failing: $_"
+            }
+        }
+        else {
+            throw "Connection completed but no context available"
+        }
+    }
+    catch {
+        Write-Host "`nFailed to connect to Microsoft Graph: $_" -ForegroundColor Red
+        Write-Host "`n----------------------------------------" -ForegroundColor Yellow
+        Write-Host "MANUAL AUTHENTICATION OPTION:" -ForegroundColor Yellow
+        Write-Host "Run this command first, then re-run the script:" -ForegroundColor White
+        Write-Host "`n  Connect-MgGraph -Scopes 'Sites.Read.All','Files.Read.All'" -ForegroundColor Cyan
+        Write-Host "----------------------------------------" -ForegroundColor Yellow
+        return $false
+    }
+}
+
+#endregion
+
+#region URL Parsing
+
+function Get-SharePointUrlType {
+    <#
+    .SYNOPSIS
+        Determines the type of SharePoint URL (Site, Folder, or File).
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Url
+    )
+
+    # Doc.aspx file link (contains sourcedoc parameter)
+    if ($Url -match "_layouts/15/Doc\.aspx") {
+        return "DocAspxFile"
+    }
+
+    # Direct file link (ends with common file extensions)
+    if ($Url -match "\.(docx|xlsx|pptx|pdf|txt|md|doc|xls|ppt|csv|json|xml|html|htm|png|jpg|jpeg|gif|mp4|mp3|wav|zip)(\?|$)") {
+        return "DirectFile"
+    }
+
+    # Site root (pattern: /sites/sitename with no additional path or just trailing slash)
+    if ($Url -match "sharepoint\.com/sites/[^/]+/?(\?|$)") {
+        return "Site"
+    }
+
+    # Otherwise assume it's a folder
+    return "Folder"
+}
+
+function Get-ParsedSharePointUrl {
+    <#
+    .SYNOPSIS
+        Parses a SharePoint URL into its components.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Url
+    )
+
+    $result = @{
+        OriginalUrl  = $Url
+        Hostname     = $null
+        SitePath     = $null
+        RelativePath = $null
+        FileName     = $null
+        SourceDocId  = $null
+    }
+
+    try {
+        $uri = [System.Uri]$Url
+        $result.Hostname = $uri.Host
+
+        # Extract site path
+        if ($Url -match "/sites/([^/]+)") {
+            $result.SitePath = "/sites/$($Matches[1])"
+        }
+
+        # For Doc.aspx URLs, extract sourcedoc GUID
+        if ($Url -match "sourcedoc=%7B([A-Fa-f0-9-]+)%7D") {
+            $result.SourceDocId = $Matches[1].ToLower()
+        }
+        elseif ($Url -match "sourcedoc=\{([A-Fa-f0-9-]+)\}") {
+            $result.SourceDocId = $Matches[1].ToLower()
+        }
+
+        # Extract file name from Doc.aspx URL
+        if ($Url -match "[?&]file=([^&]+)") {
+            $result.FileName = [System.Web.HttpUtility]::UrlDecode($Matches[1])
+        }
+
+        # Extract relative path (after Shared Documents or similar)
+        if ($Url -match "/sites/[^/]+/([^?]+)") {
+            $pathPart = $Matches[1]
+            # Skip _layouts paths
+            if ($pathPart -notmatch "^_layouts") {
+                $result.RelativePath = [System.Web.HttpUtility]::UrlDecode($pathPart)
+            }
+        }
+
+        return $result
+    }
+    catch {
+        Write-Warning "Failed to parse URL: $Url - $_"
+        return $result
+    }
+}
+
+#endregion
+
+#region SharePoint ID Resolution
+
+function Get-RelativePathFromLibrary {
+    <#
+    .SYNOPSIS
+        Calculates the relative path of an item within a document library.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ItemUrl,
+
+        [Parameter(Mandatory = $true)]
+        [string]$LibraryWebUrl
+    )
+
+    # Decode both URLs for comparison
+    $decodedItemUrl = [System.Web.HttpUtility]::UrlDecode($ItemUrl)
+    $decodedLibraryUrl = [System.Web.HttpUtility]::UrlDecode($LibraryWebUrl)
+
+    # Remove the library URL prefix to get the relative path
+    if ($decodedItemUrl.StartsWith($decodedLibraryUrl, [System.StringComparison]::OrdinalIgnoreCase)) {
+        $relativePath = $decodedItemUrl.Substring($decodedLibraryUrl.Length).TrimStart('/')
+        return $relativePath
+    }
+
+    # Fallback: try to extract path after common patterns
+    if ($decodedItemUrl -match "/Shared Documents/(.+)$") {
+        return $Matches[1]
+    }
+    if ($decodedItemUrl -match "/Documents/(.+)$") {
+        return $Matches[1]
+    }
+
+    # Return the original relative path parsing
+    return $decodedItemUrl
+}
+
+function Get-SiteInfo {
+    <#
+    .SYNOPSIS
+        Retrieves SharePoint site information using MS Graph.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Hostname,
+
+        [Parameter(Mandatory = $true)]
+        [string]$SitePath
+    )
+
+    try {
+        # Use direct REST API call for more reliable results
+        $uri = "https://graph.microsoft.com/v1.0/sites/${Hostname}:${SitePath}"
+        Write-Host "    GET $uri" -ForegroundColor DarkGray
+
+        $site = Invoke-MgGraphRequest -Uri $uri -Method GET -ErrorAction Stop
+
+        # Site ID format from Graph: {hostname},{siteId},{webId}
+        $idParts = $site.id -split ','
+
+        return @{
+            SiteId      = $idParts[1]
+            WebId       = $idParts[2]
+            SiteName    = $site.displayName
+            FullSiteId  = $site.id
+        }
+    }
+    catch {
+        throw "Failed to get site info for ${Hostname}${SitePath}: $_"
+    }
+}
+
+function Get-DocumentLibraryInfo {
+    <#
+    .SYNOPSIS
+        Gets the document library (drive) for a site that matches the item URL.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SiteId,
+
+        [Parameter(Mandatory = $false)]
+        [string]$ItemUrl
+    )
+
+    try {
+        # Use direct REST API call
+        $uri = "https://graph.microsoft.com/v1.0/sites/$SiteId/drives"
+        Write-Host "    GET $uri" -ForegroundColor DarkGray
+        $response = Invoke-MgGraphRequest -Uri $uri -Method GET -ErrorAction Stop
+        $drives = $response.value
+
+        $docLib = $null
+
+        # If ItemUrl is provided, find the drive whose webUrl is a prefix of the item URL
+        if ($ItemUrl) {
+            # Decode the item URL for comparison
+            $decodedItemUrl = [System.Web.HttpUtility]::UrlDecode($ItemUrl)
+
+            foreach ($drive in $drives) {
+                if ($drive.webUrl) {
+                    $decodedWebUrl = [System.Web.HttpUtility]::UrlDecode($drive.webUrl)
+                    # Check if the drive's webUrl is a prefix of the item URL
+                    if ($decodedItemUrl.StartsWith($decodedWebUrl, [System.StringComparison]::OrdinalIgnoreCase)) {
+                        $docLib = $drive
+                        Write-Host "    Matched library: $($drive.name) ($($drive.webUrl))" -ForegroundColor DarkGray
+                        break
+                    }
+                }
+            }
+        }
+
+        # Fallback: Find the default Documents library if no match found
+        if (-not $docLib) {
+            $docLib = $drives | Where-Object { $_.name -eq "Documents" -or $_.driveType -eq "documentLibrary" } | Select-Object -First 1
+        }
+
+        if (-not $docLib) {
+            $docLib = $drives | Select-Object -First 1
+        }
+
+        if (-not $docLib) {
+            throw "No document library found for site"
+        }
+
+        # Get the list ID by calling /drives/{driveId}/list
+        $listId = $null
+        if ($docLib.sharePointIds -and $docLib.sharePointIds.listId) {
+            $listId = $docLib.sharePointIds.listId
+        }
+        else {
+            # Fetch list info directly from the drive
+            $listUri = "https://graph.microsoft.com/v1.0/drives/$($docLib.id)/list?`$select=id"
+            Write-Host "    GET $listUri" -ForegroundColor DarkGray
+            try {
+                $listResponse = Invoke-MgGraphRequest -Uri $listUri -Method GET -ErrorAction Stop
+                $listId = $listResponse.id
+            }
+            catch {
+                Write-Warning "Could not get list ID for drive: $_"
+            }
+        }
+
+        return @{
+            DriveId = $docLib.id
+            ListId  = $listId
+            Name    = $docLib.name
+            WebUrl  = $docLib.webUrl
+        }
+    }
+    catch {
+        throw "Failed to get document library: $_"
+    }
+}
+
+function Get-DriveItemByPath {
+    <#
+    .SYNOPSIS
+        Retrieves a drive item (file or folder) by its path relative to the drive root.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$DriveId,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ItemPath
+    )
+
+    try {
+        # Clean up the path
+        $cleanPath = $ItemPath.TrimStart('/')
+
+        if ([string]::IsNullOrEmpty($cleanPath)) {
+            # Root of document library
+            $uri = "https://graph.microsoft.com/v1.0/drives/$DriveId/root"
+        }
+        else {
+            # URL encode the path properly, but preserve forward slashes
+            $encodedPath = [System.Uri]::EscapeDataString($cleanPath) -replace '%2F', '/'
+            $uri = "https://graph.microsoft.com/v1.0/drives/$DriveId/root:/$encodedPath"
+        }
+
+        Write-Host "    GET $uri" -ForegroundColor DarkGray
+        $item = Invoke-MgGraphRequest -Uri $uri -Method GET -ErrorAction Stop
+
+        $isFolder = $null -ne $item.folder
+
+        return @{
+            UniqueId = $item.id
+            Name     = $item.name
+            IsFolder = $isFolder
+            ListId   = if ($item.sharePointIds) { $item.sharePointIds.listId } else { $null }
+            ItemId   = if ($item.sharePointIds) { $item.sharePointIds.listItemUniqueId } else { $item.id }
+        }
+    }
+    catch {
+        throw "Failed to get drive item at path '$ItemPath': $_"
+    }
+}
+
+function Get-DriveItemById {
+    <#
+    .SYNOPSIS
+        Retrieves a drive item by its unique ID (for Doc.aspx URLs).
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SiteId,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ItemId
+    )
+
+    try {
+        # Get all drives for the site using REST API
+        $drivesUri = "https://graph.microsoft.com/v1.0/sites/$SiteId/drives"
+        Write-Host "    GET $drivesUri" -ForegroundColor DarkGray
+        $drivesResponse = Invoke-MgGraphRequest -Uri $drivesUri -Method GET -ErrorAction Stop
+        $drives = $drivesResponse.value
+
+        foreach ($drive in $drives) {
+            try {
+                # Try to get item by ID from each drive
+                $uri = "https://graph.microsoft.com/v1.0/drives/$($drive.id)/items/$ItemId"
+                Write-Host "    GET $uri" -ForegroundColor DarkGray
+                $item = Invoke-MgGraphRequest -Uri $uri -Method GET -ErrorAction SilentlyContinue
+
+                if ($item) {
+                    return @{
+                        UniqueId = $item.id
+                        Name     = $item.name
+                        IsFolder = $null -ne $item.folder
+                        DriveId  = $drive.id
+                        ListId   = if ($item.sharePointIds) { $item.sharePointIds.listId } else { $drive.sharePointIds.listId }
+                    }
+                }
+            }
+            catch {
+                continue
+            }
+        }
+
+        # If not found by ID, try with uppercase formatting
+        $formattedId = $ItemId.ToUpper()
+        foreach ($drive in $drives) {
+            try {
+                $uri = "https://graph.microsoft.com/v1.0/drives/$($drive.id)/items/$formattedId"
+                Write-Host "    GET $uri (uppercase)" -ForegroundColor DarkGray
+                $item = Invoke-MgGraphRequest -Uri $uri -Method GET -ErrorAction SilentlyContinue
+
+                if ($item) {
+                    return @{
+                        UniqueId = $item.id
+                        Name     = $item.name
+                        IsFolder = $null -ne $item.folder
+                        DriveId  = $drive.id
+                        ListId   = if ($item.sharePointIds) { $item.sharePointIds.listId } else { $drive.sharePointIds.listId }
+                    }
+                }
+            }
+            catch {
+                continue
+            }
+        }
+
+        throw "Item not found with ID: $ItemId"
+    }
+    catch {
+        throw "Failed to get drive item by ID '$ItemId': $_"
+    }
+}
+
+function Resolve-SharePointUrl {
+    <#
+    .SYNOPSIS
+        Main function to resolve a SharePoint URL to its full ID information.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Url
+    )
+
+    $urlType = Get-SharePointUrlType -Url $Url
+    $parsed = Get-ParsedSharePointUrl -Url $Url
+
+    Write-Host "  Type: $urlType" -ForegroundColor Gray
+
+    if (-not $parsed.Hostname -or -not $parsed.SitePath) {
+        throw "Could not parse hostname or site path from URL: $Url"
+    }
+
+    # Get site information
+    $siteInfo = Get-SiteInfo -Hostname $parsed.Hostname -SitePath $parsed.SitePath
+
+    $result = @{
+        url       = $Url
+        name      = ""
+        site_id   = $siteInfo.SiteId
+        web_id    = $siteInfo.WebId
+        list_id   = "00000000-0000-0000-0000-000000000000"
+        unique_id = "00000000-0000-0000-0000-000000000000"
+        type      = ""
+    }
+
+    switch ($urlType) {
+        "Site" {
+            $result.type = "Site"
+            $result.name = $siteInfo.SiteName
+            # Sites don't have list_id or unique_id, use zeros
+        }
+
+        "DocAspxFile" {
+            $result.type = "File"
+
+            if ($parsed.SourceDocId) {
+                try {
+                    $itemInfo = Get-DriveItemById -SiteId $siteInfo.FullSiteId -ItemId $parsed.SourceDocId
+                    $result.unique_id = $parsed.SourceDocId
+                    $result.name = $itemInfo.Name
+                    $result.list_id = $itemInfo.ListId
+                }
+                catch {
+                    Write-Warning "Could not resolve item by ID, using parsed values: $_"
+                    $result.unique_id = $parsed.SourceDocId
+                    $result.name = $parsed.FileName
+
+                    # Try to get list_id from document library
+                    try {
+                        $docLib = Get-DocumentLibraryInfo -SiteId $siteInfo.FullSiteId -ItemUrl $Url
+                        $result.list_id = $docLib.ListId
+                    }
+                    catch {
+                        Write-Warning "Could not get document library info"
+                    }
+                }
+            }
+            else {
+                $result.name = $parsed.FileName
+            }
+        }
+
+        "DirectFile" {
+            $result.type = "File"
+
+            try {
+                $docLib = Get-DocumentLibraryInfo -SiteId $siteInfo.FullSiteId -ItemUrl $Url
+                $result.list_id = $docLib.ListId
+
+                # Calculate relative path from the library's webUrl
+                $relativePath = Get-RelativePathFromLibrary -ItemUrl $Url -LibraryWebUrl $docLib.WebUrl
+
+                $itemInfo = Get-DriveItemByPath -DriveId $docLib.DriveId -ItemPath $relativePath
+                $result.unique_id = $itemInfo.ItemId ?? $itemInfo.UniqueId
+                $result.name = $itemInfo.Name
+                if ($itemInfo.ListId) {
+                    $result.list_id = $itemInfo.ListId
+                }
+            }
+            catch {
+                throw "Failed to resolve direct file: $_"
+            }
+        }
+
+        "Folder" {
+            $result.type = "Folder"
+
+            try {
+                $docLib = Get-DocumentLibraryInfo -SiteId $siteInfo.FullSiteId -ItemUrl $Url
+                $result.list_id = $docLib.ListId
+
+                # Calculate relative path from the library's webUrl
+                $relativePath = Get-RelativePathFromLibrary -ItemUrl $Url -LibraryWebUrl $docLib.WebUrl
+
+                $itemInfo = Get-DriveItemByPath -DriveId $docLib.DriveId -ItemPath $relativePath
+                $result.unique_id = $itemInfo.ItemId ?? $itemInfo.UniqueId
+                $result.name = $itemInfo.Name
+                if ($itemInfo.ListId) {
+                    $result.list_id = $itemInfo.ListId
+                }
+            }
+            catch {
+                throw "Failed to resolve folder: $_"
+            }
+        }
+    }
+
+    return $result
+}
+
+#endregion
+
+#region Agent File Builder
+
+function ConvertTo-Base64Image {
+    <#
+    .SYNOPSIS
+        Converts an image file to a base64 data URI.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ImagePath
+    )
+
+    try {
+        $bytes = [System.IO.File]::ReadAllBytes($ImagePath)
+        $base64 = [System.Convert]::ToBase64String($bytes)
+
+        # Determine MIME type
+        $extension = [System.IO.Path]::GetExtension($ImagePath).ToLower()
+        $mimeType = switch ($extension) {
+            ".png" { "image/png" }
+            ".jpg" { "image/jpeg" }
+            ".jpeg" { "image/jpeg" }
+            ".gif" { "image/gif" }
+            ".svg" { "image/svg+xml" }
+            default { "image/png" }
+        }
+
+        return "data:${mimeType};base64,$base64"
+    }
+    catch {
+        throw "Failed to convert image to base64: $_"
+    }
+}
+
+function Build-AgentFile {
+    <#
+    .SYNOPSIS
+        Builds the .agent file structure from the source agent and resolved items.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$SourceAgent,
+
+        [Parameter(Mandatory = $true)]
+        [array]$ResolvedItems,
+
+        [Parameter(Mandatory = $false)]
+        [string]$IconBase64
+    )
+
+    # Separate items into files vs sites/folders
+    $fileItems = @($ResolvedItems | Where-Object { $_.type -eq "File" })
+    $otherItems = @($ResolvedItems | Where-Object { $_.type -ne "File" })
+
+    # Build conversation starters
+    $conversationStarters = @{
+        conversationStarterList = @()
+        welcomeMessage          = @{
+            text = "Ask a question or get started with one of these prompts:"
+        }
+    }
+
+    if ($SourceAgent.conversation_starters) {
+        $conversationStarters.conversationStarterList = @(
+            $SourceAgent.conversation_starters | ForEach-Object {
+                @{ text = $_.text }
+            }
+        )
+    }
+
+    # Build capabilities array
+    $capabilities = @()
+
+    foreach ($cap in $SourceAgent.capabilities) {
+        switch ($cap.name) {
+            "WebSearch" {
+                $capabilities += @{
+                    name = "WebSearch"
+                }
+            }
+            "GraphConnectors" {
+                $connectorCap = @{
+                    name        = "GraphConnectors"
+                    connections = @()
+                }
+                if ($cap.connections) {
+                    $connectorCap.connections = @(
+                        $cap.connections | ForEach-Object {
+                            @{ connection_id = $_.connection_id }
+                        }
+                    )
+                }
+                $capabilities += $connectorCap
+            }
+            "OneDriveAndSharePoint" {
+                $spoCap = @{
+                    name                    = "OneDriveAndSharePoint"
+                    items_by_sharepoint_ids = $fileItems
+                    items_by_url            = $otherItems
+                }
+                $capabilities += $spoCap
+            }
+        }
+    }
+
+    # Build gptDefinition
+    $gptDefinition = @{
+        name               = $SourceAgent.name
+        description        = $SourceAgent.description
+        instructions       = $SourceAgent.instructions
+        capabilities       = $capabilities
+        behavior_overrides = @{
+            special_instructions = @{
+                discourage_model_knowledge = $true
+            }
+        }
+    }
+
+    # Build the complete agent file
+    $agentFile = @{
+        schemaVersion      = "0.2.0"
+        customCopilotConfig = @{
+            conversationStarters = $conversationStarters
+            gptDefinition        = $gptDefinition
+        }
+    }
+
+    # Add icon if available
+    if ($IconBase64) {
+        $agentFile.customCopilotConfig.icon = $IconBase64
+    }
+
+    return $agentFile
+}
+
+function Export-AgentFile {
+    <#
+    .SYNOPSIS
+        Exports the agent file to disk.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$AgentData,
+
+        [Parameter(Mandatory = $true)]
+        [string]$OutputDirectory,
+
+        [Parameter(Mandatory = $true)]
+        [string]$AgentName
+    )
+
+    # Sanitize agent name for file system
+    $safeName = $AgentName -replace '[\\/:*?"<>|]', '_'
+    $fileName = "$safeName.agent"
+    $fullPath = Join-Path $OutputDirectory $fileName
+
+    # Create output directory if it doesn't exist (do this before try block)
+    if (-not (Test-Path $OutputDirectory)) {
+        Write-Host "  Creating output directory: $OutputDirectory" -ForegroundColor Gray
+        try {
+            $null = New-Item -ItemType Directory -Path $OutputDirectory -Force -ErrorAction Stop
+        }
+        catch {
+            throw "Failed to create output directory '$OutputDirectory': $_"
+        }
+    }
+
+    try {
+        # Convert to JSON with proper depth and formatting
+        $json = $AgentData | ConvertTo-Json -Depth 20
+
+        # Write to file using Out-File (more reliable on Windows)
+        $json | Out-File -FilePath $fullPath -Encoding UTF8 -Force
+
+        return $fullPath
+    }
+    catch {
+        throw "Failed to export agent file: $_"
+    }
+}
+
+#endregion
+
+#region Main Execution
+
+function Main {
+    Write-Host "`n=====================================================" -ForegroundColor Cyan
+    Write-Host "  MCS Declarative Agent to SharePoint Agent Converter" -ForegroundColor Cyan
+    Write-Host "=====================================================" -ForegroundColor Cyan
+
+    $tempDir = $null
+
+    try {
+        # Step 1: Validate and import modules
+        Write-Host "`n[1/7] Checking required modules..." -ForegroundColor Yellow
+        Write-Host "  Module path: $script:SystemModulePath" -ForegroundColor Gray
+        if (-not (Test-RequiredModules)) {
+            throw "Required modules are not installed at system level"
+        }
+        Write-Host "  All required modules found" -ForegroundColor Green
+
+        # Import modules from system path
+        Write-Host "  Importing modules..." -ForegroundColor Gray
+        Import-GraphModules
+
+        # Step 2: Extract zip file
+        Write-Host "`n[2/7] Extracting zip file..." -ForegroundColor Yellow
+        $tempDir = Join-Path $env:TEMP "MCSAgent_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
+        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+
+        $extractedFiles = Expand-AgentZip -ZipPath $ZipFilePath -DestinationPath $tempDir
+        Write-Host "  Extracted to: $tempDir" -ForegroundColor Green
+
+        # Step 3: Load source agent
+        Write-Host "`n[3/7] Loading source agent definition..." -ForegroundColor Yellow
+        $sourceAgent = Get-Content $extractedFiles.DeclarativeAgentPath -Raw | ConvertFrom-Json
+        Write-Host "  Agent: $($sourceAgent.name)" -ForegroundColor Green
+        Write-Host "  Version: $($sourceAgent.version)" -ForegroundColor Gray
+
+        # Step 4: Convert icon to base64
+        Write-Host "`n[4/7] Processing icon..." -ForegroundColor Yellow
+        $iconBase64 = $null
+        if ($extractedFiles.ColorIconPath -and (Test-Path $extractedFiles.ColorIconPath)) {
+            $iconBase64 = ConvertTo-Base64Image -ImagePath $extractedFiles.ColorIconPath
+            Write-Host "  Icon converted to base64" -ForegroundColor Green
+        }
+        else {
+            Write-Host "  No icon found, skipping" -ForegroundColor Gray
+        }
+
+        # Step 5: Connect to MS Graph
+        Write-Host "`n[5/7] Authenticating with Microsoft Graph..." -ForegroundColor Yellow
+        if (-not (Connect-ToMSGraph)) {
+            throw "Failed to authenticate with Microsoft Graph"
+        }
+
+        # Step 6: Resolve SharePoint URLs
+        Write-Host "`n[6/7] Resolving SharePoint URLs..." -ForegroundColor Yellow
+        $resolvedItems = @()
+        $spoCapability = $sourceAgent.capabilities | Where-Object { $_.name -eq "OneDriveAndSharePoint" }
+
+        if ($spoCapability -and $spoCapability.items_by_url) {
+            $totalItems = $spoCapability.items_by_url.Count
+            $currentItem = 0
+
+            foreach ($item in $spoCapability.items_by_url) {
+                $currentItem++
+                Write-Host "`n  [$currentItem/$totalItems] $($item.url)" -ForegroundColor White
+
+                try {
+                    $resolved = Resolve-SharePointUrl -Url $item.url
+                    $resolvedItems += $resolved
+                    Write-Host "  Resolved: $($resolved.name) ($($resolved.type))" -ForegroundColor Green
+                }
+                catch {
+                    Write-Host "  ERROR: $_" -ForegroundColor Red
+                    Write-Host "  Skipping this item..." -ForegroundColor Yellow
+                }
+            }
+        }
+        else {
+            Write-Host "  No OneDriveAndSharePoint items to resolve" -ForegroundColor Gray
+        }
+
+        Write-Host "`n  Successfully resolved $($resolvedItems.Count) items" -ForegroundColor Green
+
+        # Step 7: Build and export agent file
+        Write-Host "`n[7/7] Building and exporting .agent file..." -ForegroundColor Yellow
+
+        $agentData = Build-AgentFile -SourceAgent $sourceAgent -ResolvedItems $resolvedItems -IconBase64 $iconBase64
+
+        # Determine output directory
+        $outputDir = if ($OutputPath) { $OutputPath } else { Split-Path $ZipFilePath -Parent }
+        if (-not (Test-Path $outputDir)) {
+            New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+        }
+
+        $outputFile = Export-AgentFile -AgentData $agentData -OutputDirectory $outputDir -AgentName $sourceAgent.name
+
+        Write-Host "`n=====================================================" -ForegroundColor Green
+        Write-Host "  Conversion Complete!" -ForegroundColor Green
+        Write-Host "=====================================================" -ForegroundColor Green
+        Write-Host "`n  Output file: $outputFile" -ForegroundColor White
+        Write-Host ""
+
+        return $outputFile
+    }
+    catch {
+        Write-Host "`nERROR: $_" -ForegroundColor Red
+        Write-Host $_.ScriptStackTrace -ForegroundColor DarkRed
+        throw
+    }
+    finally {
+        # Cleanup temp directory
+        if ($tempDir -and (Test-Path $tempDir)) {
+            Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+# Run main function
+Main

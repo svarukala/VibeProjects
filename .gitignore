@@ -1,0 +1,12 @@
+SpecialLearner/
+node_modules/
+__pycache__/
+*.log
+.env
+.DS_Store
+dist/
+build/
+coverage/
+AgentAnalyzer/nul
+CAKE Tool/www.sec.gov/
+Vibe-Projects.zip
