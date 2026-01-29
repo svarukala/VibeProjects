@@ -1,0 +1,826 @@
+swagger: '2.0'
+info:
+  title: Meeting AI Insights
+  description: ''
+  version: '1.0'
+host: graph.microsoft.com
+basePath: /
+schemes:
+  - https
+consumes: []
+produces: []
+paths:
+  /v1.0/me:
+    get:
+      responses:
+        default:
+          description: default
+          schema:
+            type: object
+            properties:
+              '@odata.context':
+                type: string
+                description: '@odata.context'
+              businessPhones:
+                type: array
+                items:
+                  type: string
+                description: businessPhones
+              displayName:
+                type: string
+                description: displayName
+              givenName:
+                type: string
+                description: givenName
+              jobTitle:
+                type: string
+                description: jobTitle
+              mail:
+                type: string
+                description: mail
+              mobilePhone:
+                type: string
+                description: mobilePhone
+              officeLocation:
+                type: string
+                description: officeLocation
+              preferredLanguage:
+                type: string
+                description: preferredLanguage
+              surname:
+                type: string
+                description: surname
+              userPrincipalName:
+                type: string
+                description: userPrincipalName
+              id:
+                type: string
+                description: id
+      summary: Get my profile
+      description: Get current logged in users profile
+      operationId: GetMyProfile
+      parameters: []
+  /v1.0/users/{userid}/events:
+    get:
+      responses:
+        default:
+          description: default
+          schema:
+            type: object
+            properties:
+              '@odata.context':
+                type: string
+                description: '@odata.context'
+              value:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@odata.etag':
+                      type: string
+                      description: '@odata.etag'
+                    id:
+                      type: string
+                      description: id
+                    createdDateTime:
+                      type: string
+                      description: createdDateTime
+                    lastModifiedDateTime:
+                      type: string
+                      description: lastModifiedDateTime
+                    changeKey:
+                      type: string
+                      description: changeKey
+                    categories:
+                      type: array
+                      items: {}
+                      description: categories
+                    transactionId:
+                      type: string
+                      description: transactionId
+                    originalStartTimeZone:
+                      type: string
+                      description: originalStartTimeZone
+                    originalEndTimeZone:
+                      type: string
+                      description: originalEndTimeZone
+                    iCalUId:
+                      type: string
+                      description: iCalUId
+                    uid:
+                      type: string
+                      description: uid
+                    reminderMinutesBeforeStart:
+                      type: integer
+                      format: int32
+                      description: reminderMinutesBeforeStart
+                    isReminderOn:
+                      type: boolean
+                      description: isReminderOn
+                    hasAttachments:
+                      type: boolean
+                      description: hasAttachments
+                    subject:
+                      type: string
+                      description: subject
+                    bodyPreview:
+                      type: string
+                      description: bodyPreview
+                    importance:
+                      type: string
+                      description: importance
+                    sensitivity:
+                      type: string
+                      description: sensitivity
+                    isAllDay:
+                      type: boolean
+                      description: isAllDay
+                    isCancelled:
+                      type: boolean
+                      description: isCancelled
+                    isOrganizer:
+                      type: boolean
+                      description: isOrganizer
+                    responseRequested:
+                      type: boolean
+                      description: responseRequested
+                    seriesMasterId:
+                      type: string
+                      description: seriesMasterId
+                    showAs:
+                      type: string
+                      description: showAs
+                    type:
+                      type: string
+                      description: type
+                    webLink:
+                      type: string
+                      description: webLink
+                    onlineMeetingUrl:
+                      type: string
+                      description: onlineMeetingUrl
+                    isOnlineMeeting:
+                      type: boolean
+                      description: isOnlineMeeting
+                    onlineMeetingProvider:
+                      type: string
+                      description: onlineMeetingProvider
+                    allowNewTimeProposals:
+                      type: boolean
+                      description: allowNewTimeProposals
+                    occurrenceId:
+                      type: string
+                      description: occurrenceId
+                    isDraft:
+                      type: boolean
+                      description: isDraft
+                    hideAttendees:
+                      type: boolean
+                      description: hideAttendees
+                    responseStatus:
+                      type: object
+                      properties:
+                        response:
+                          type: string
+                          description: response
+                        time:
+                          type: string
+                          description: time
+                      description: responseStatus
+                    body:
+                      type: object
+                      properties:
+                        contentType:
+                          type: string
+                          description: contentType
+                        content:
+                          type: string
+                          description: content
+                      description: body
+                    start:
+                      type: object
+                      properties:
+                        dateTime:
+                          type: string
+                          description: dateTime
+                        timeZone:
+                          type: string
+                          description: timeZone
+                      description: start
+                    end:
+                      type: object
+                      properties:
+                        dateTime:
+                          type: string
+                          description: dateTime
+                        timeZone:
+                          type: string
+                          description: timeZone
+                      description: end
+                    location:
+                      type: object
+                      properties:
+                        displayName:
+                          type: string
+                          description: displayName
+                        locationType:
+                          type: string
+                          description: locationType
+                        uniqueId:
+                          type: string
+                          description: uniqueId
+                        uniqueIdType:
+                          type: string
+                          description: uniqueIdType
+                      description: location
+                    locations:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          displayName:
+                            type: string
+                            description: displayName
+                          locationType:
+                            type: string
+                            description: locationType
+                          uniqueId:
+                            type: string
+                            description: uniqueId
+                          uniqueIdType:
+                            type: string
+                            description: uniqueIdType
+                      description: locations
+                    recurrence:
+                      type: string
+                      description: recurrence
+                    attendees:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          type:
+                            type: string
+                            description: type
+                          status:
+                            type: object
+                            properties:
+                              response:
+                                type: string
+                                description: response
+                              time:
+                                type: string
+                                description: time
+                            description: status
+                          emailAddress:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: name
+                              address:
+                                type: string
+                                description: address
+                            description: emailAddress
+                      description: attendees
+                    organizer:
+                      type: object
+                      properties:
+                        emailAddress:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: name
+                            address:
+                              type: string
+                              description: address
+                          description: emailAddress
+                      description: organizer
+                    onlineMeeting:
+                      type: object
+                      properties:
+                        joinUrl:
+                          type: string
+                          description: joinUrl
+                        conferenceId:
+                          type: string
+                          description: conferenceId
+                        tollNumber:
+                          type: string
+                          description: tollNumber
+                        quickDial:
+                          type: string
+                          description: quickDial
+                      description: onlineMeeting
+                    calendar@odata.associationLink:
+                      type: string
+                      description: calendar@odata.associationLink
+                    calendar@odata.navigationLink:
+                      type: string
+                      description: calendar@odata.navigationLink
+                description: value
+              '@odata.nextLink':
+                type: string
+                description: '@odata.nextLink'
+      operationId: GetMeetings
+      summary: Get my meetings
+      description: Get users meetings
+      parameters:
+        - name: userid
+          in: path
+          required: true
+          type: string
+  /v1.0/users/{userid}/onlineMeetings:
+    get:
+      responses:
+        default:
+          description: default
+          schema:
+            type: object
+            properties:
+              '@odata.context':
+                type: string
+                description: '@odata.context'
+              value:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: id
+                    creationDateTime:
+                      type: string
+                      description: creationDateTime
+                    startDateTime:
+                      type: string
+                      description: startDateTime
+                    endDateTime:
+                      type: string
+                      description: endDateTime
+                    joinUrl:
+                      type: string
+                      description: joinUrl
+                    meetingCode:
+                      type: string
+                      description: meetingCode
+                    isBroadcast:
+                      type: boolean
+                      description: isBroadcast
+                    autoAdmittedUsers:
+                      type: string
+                      description: autoAdmittedUsers
+                    outerMeetingAutoAdmittedUsers:
+                      type: string
+                      description: outerMeetingAutoAdmittedUsers
+                    capabilities:
+                      type: array
+                      items: {}
+                      description: capabilities
+                    externalId:
+                      type: string
+                      description: externalId
+                    meetingTemplateId:
+                      type: string
+                      description: meetingTemplateId
+                    meetingType:
+                      type: string
+                      description: meetingType
+                    meetingsMigrationMode:
+                      type: string
+                      description: meetingsMigrationMode
+                    joinWebUrl:
+                      type: string
+                      description: joinWebUrl
+                    subject:
+                      type: string
+                      description: subject
+                    videoTeleconferenceId:
+                      type: string
+                      description: videoTeleconferenceId
+                    isEntryExitAnnounced:
+                      type: boolean
+                      description: isEntryExitAnnounced
+                    isEndToEndEncryptionEnabled:
+                      type: boolean
+                      description: isEndToEndEncryptionEnabled
+                    allowedPresenters:
+                      type: string
+                      description: allowedPresenters
+                    allowAttendeeToEnableMic:
+                      type: boolean
+                      description: allowAttendeeToEnableMic
+                    allowAttendeeToEnableCamera:
+                      type: boolean
+                      description: allowAttendeeToEnableCamera
+                    allowMeetingChat:
+                      type: string
+                      description: allowMeetingChat
+                    allowedLobbyAdmitters:
+                      type: string
+                      description: allowedLobbyAdmitters
+                    shareMeetingChatHistoryDefault:
+                      type: string
+                      description: shareMeetingChatHistoryDefault
+                    allowTeamworkReactions:
+                      type: boolean
+                      description: allowTeamworkReactions
+                    anonymizeIdentityForRoles:
+                      type: array
+                      items: {}
+                      description: anonymizeIdentityForRoles
+                    recordAutomatically:
+                      type: boolean
+                      description: recordAutomatically
+                    allowParticipantsToChangeName:
+                      type: boolean
+                      description: allowParticipantsToChangeName
+                    allowTranscription:
+                      type: boolean
+                      description: allowTranscription
+                    allowRecording:
+                      type: boolean
+                      description: allowRecording
+                    allowWhiteboard:
+                      type: boolean
+                      description: allowWhiteboard
+                    allowBreakoutRooms:
+                      type: boolean
+                      description: allowBreakoutRooms
+                    allowLiveShare:
+                      type: string
+                      description: allowLiveShare
+                    allowPowerPointSharing:
+                      type: boolean
+                      description: allowPowerPointSharing
+                    allowCopyingAndSharingMeetingContent:
+                      type: boolean
+                      description: allowCopyingAndSharingMeetingContent
+                    meetingOptionsWebUrl:
+                      type: string
+                      description: meetingOptionsWebUrl
+                    iCalUid:
+                      type: string
+                      description: iCalUid
+                    broadcastSettings:
+                      type: string
+                      description: broadcastSettings
+                    meetingInfo:
+                      type: string
+                      description: meetingInfo
+                    activeMeetingDetails:
+                      type: string
+                      description: activeMeetingDetails
+                    chatRestrictions:
+                      type: string
+                      description: chatRestrictions
+                    participants:
+                      type: object
+                      properties:
+                        organizer:
+                          type: object
+                          properties:
+                            upn:
+                              type: string
+                              description: upn
+                            role:
+                              type: string
+                              description: role
+                            identity:
+                              type: object
+                              properties:
+                                application:
+                                  type: string
+                                  description: application
+                                device:
+                                  type: string
+                                  description: device
+                                user:
+                                  type: object
+                                  properties:
+                                    id:
+                                      type: string
+                                      description: id
+                                    displayName:
+                                      type: string
+                                      description: displayName
+                                    tenantId:
+                                      type: string
+                                      description: tenantId
+                                    identityProvider:
+                                      type: string
+                                      description: identityProvider
+                                  description: user
+                              description: identity
+                          description: organizer
+                        attendees:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              upn:
+                                type: string
+                                description: upn
+                              role:
+                                type: string
+                                description: role
+                              identity:
+                                type: object
+                                properties:
+                                  application:
+                                    type: string
+                                    description: application
+                                  device:
+                                    type: string
+                                    description: device
+                                  user:
+                                    type: object
+                                    properties:
+                                      id:
+                                        type: string
+                                        description: id
+                                      displayName:
+                                        type: string
+                                        description: displayName
+                                      tenantId:
+                                        type: string
+                                        description: tenantId
+                                    description: user
+                                description: identity
+                          description: attendees
+                      description: participants
+                    audioConferencing:
+                      type: object
+                      properties:
+                        conferenceId:
+                          type: string
+                          description: conferenceId
+                        tollNumber:
+                          type: string
+                          description: tollNumber
+                        tollFreeNumber:
+                          type: string
+                          description: tollFreeNumber
+                        dialinUrl:
+                          type: string
+                          description: dialinUrl
+                        tollNumbers:
+                          type: array
+                          items:
+                            type: string
+                          description: tollNumbers
+                        tollFreeNumbers:
+                          type: array
+                          items: {}
+                          description: tollFreeNumbers
+                      description: audioConferencing
+                    chatInfo:
+                      type: object
+                      properties:
+                        threadId:
+                          type: string
+                          description: threadId
+                        messageId:
+                          type: string
+                          description: messageId
+                        replyChainMessageId:
+                          type: string
+                          description: replyChainMessageId
+                      description: chatInfo
+                    joinInformation:
+                      type: object
+                      properties:
+                        content:
+                          type: string
+                          description: content
+                        contentType:
+                          type: string
+                          description: contentType
+                      description: joinInformation
+                    joinMeetingIdSettings:
+                      type: object
+                      properties:
+                        isPasscodeRequired:
+                          type: boolean
+                          description: isPasscodeRequired
+                        joinMeetingId:
+                          type: string
+                          description: joinMeetingId
+                        passcode:
+                          type: string
+                          description: passcode
+                      description: joinMeetingIdSettings
+                    lobbyBypassSettings:
+                      type: object
+                      properties:
+                        scope:
+                          type: string
+                          description: scope
+                        isDialInBypassEnabled:
+                          type: boolean
+                          description: isDialInBypassEnabled
+                      description: lobbyBypassSettings
+                    watermarkProtection:
+                      type: object
+                      properties:
+                        isEnabledForContentSharing:
+                          type: boolean
+                          description: isEnabledForContentSharing
+                        isEnabledForVideo:
+                          type: boolean
+                          description: isEnabledForVideo
+                      description: watermarkProtection
+                description: value
+      operationId: GetMeetingId
+      summary: Get meeting id
+      parameters:
+        - name: userid
+          in: path
+          required: true
+          type: string
+        - name: $filter
+          in: query
+          required: false
+          type: string
+      description: Get meeting id for selected meeting
+  /beta/copilot/users/{userid}/onlineMeetings/{meetingid}/aiInsights:
+    get:
+      responses:
+        default:
+          description: default
+          schema:
+            type: object
+            properties:
+              '@odata.context':
+                type: string
+                description: '@odata.context'
+              '@odata.count':
+                type: integer
+                format: int32
+                description: '@odata.count'
+              value:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: id
+                description: value
+      operationId: GetMeetingInsightsId
+      summary: Get meeting insights id
+      parameters:
+        - name: userid
+          in: path
+          required: true
+          type: string
+        - name: meetingid
+          in: path
+          required: true
+          type: string
+        - name: $select
+          in: query
+          required: false
+          type: string
+          default: id
+      description: Get meeting insights id
+  /beta/copilot/users/{userid}/onlineMeetings/{meetingid}/aiInsights/{aiInsightsId}:
+    get:
+      responses:
+        default:
+          description: default
+          schema:
+            type: object
+            properties:
+              '@odata.context':
+                type: string
+                description: '@odata.context'
+              id:
+                type: string
+                description: id
+              callId:
+                type: string
+                description: callId
+              contentCorrelationId:
+                type: string
+                description: contentCorrelationId
+              createdDateTime:
+                type: string
+                description: createdDateTime
+              endDateTime:
+                type: string
+                description: endDateTime
+              meetingNotes:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                      description: title
+                    text:
+                      type: string
+                      description: text
+                    subpoints:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                            description: title
+                          text:
+                            type: string
+                            description: text
+                      description: subpoints
+                description: meetingNotes
+              actionItems:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                      description: title
+                    text:
+                      type: string
+                      description: text
+                    ownerDisplayName:
+                      type: string
+                      description: ownerDisplayName
+                description: actionItems
+              viewpoint:
+                type: object
+                properties:
+                  mentionEvents:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        eventDateTime:
+                          type: string
+                          description: eventDateTime
+                        transcriptUtterance:
+                          type: string
+                          description: transcriptUtterance
+                        speaker:
+                          type: object
+                          properties:
+                            application:
+                              type: string
+                              description: application
+                            device:
+                              type: string
+                              description: device
+                            user:
+                              type: object
+                              properties:
+                                '@odata.type':
+                                  type: string
+                                  description: '@odata.type'
+                                id:
+                                  type: string
+                                  description: id
+                                displayName:
+                                  type: string
+                                  description: displayName
+                                userIdentityType:
+                                  type: string
+                                  description: userIdentityType
+                                tenantId:
+                                  type: string
+                                  description: tenantId
+                              description: user
+                          description: speaker
+                    description: mentionEvents
+                description: viewpoint
+      operationId: GetMeetingAIInsights
+      summary: Get meeting AI insights
+      description: Get meeting AI insights
+      parameters:
+        - name: userid
+          in: path
+          required: true
+          type: string
+        - name: meetingid
+          in: path
+          required: true
+          type: string
+        - name: aiInsightsId
+          in: path
+          required: true
+          type: string
+definitions: {}
+parameters: {}
+responses: {}
+securityDefinitions:
+  oauth2-auth:
+    type: oauth2
+    flow: accessCode
+    tokenUrl: https://login.windows.net/common/oauth2/authorize
+    scopes: {}
+    authorizationUrl: https://login.microsoftonline.com/common/oauth2/authorize
+security:
+  - oauth2-auth: []
+tags: []
