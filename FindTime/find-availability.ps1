@@ -34,50 +34,50 @@ param(
 # This data comes from M365 calendar queries
 $meetings = @(
     # Thursday, Jan 29, 2026
-    @{ Date = "2026-01-29"; Start = "09:00"; End = "09:30"; Title = "McKinsey Teams White Glove Session" }
-    @{ Date = "2026-01-29"; Start = "09:00"; End = "09:45"; Title = "Generative Orchestration feedback forum" }
-    @{ Date = "2026-01-29"; Start = "09:30"; End = "10:45"; Title = "ETS - Power Platform Workshops" }
-    @{ Date = "2026-01-29"; Start = "10:00"; End = "11:00"; Title = "ESS CAPE Customer Deployment Sync" }
-    @{ Date = "2026-01-29"; Start = "10:30"; End = "11:00"; Title = "1:1 Srinivas & Bobby" }
-    @{ Date = "2026-01-29"; Start = "11:00"; End = "12:00"; Title = "Weekly CAPE CWL & Customer Health Review" }
-    @{ Date = "2026-01-29"; Start = "12:00"; End = "12:30"; Title = "[Project Helix] Features Office Hours" }
-    @{ Date = "2026-01-29"; Start = "13:00"; End = "14:00"; Title = "Power Platform Ninjas and Copilot Triage" }
-    @{ Date = "2026-01-29"; Start = "13:30"; End = "14:00"; Title = "Shadow A/B Office Hours" }
-    @{ Date = "2026-01-29"; Start = "14:35"; End = "15:30"; Title = "Copilot platform WSR & post-mortem" }
-    @{ Date = "2026-01-29"; Start = "15:00"; End = "15:30"; Title = "Microsoft/PWC Employee Self Service Check-in" }
-    @{ Date = "2026-01-29"; Start = "15:30"; End = "16:00"; Title = "PNC Bank Dev support" }
+    @{ Date = "2026-01-29"; Start = "09:00"; End = "09:30"; Title = "Meeting" }
+    @{ Date = "2026-01-29"; Start = "09:00"; End = "09:45"; Title = "Meeting" }
+    @{ Date = "2026-01-29"; Start = "09:30"; End = "10:45"; Title = "Meeting" }
+    @{ Date = "2026-01-29"; Start = "10:00"; End = "11:00"; Title = "Meeting" }
+    @{ Date = "2026-01-29"; Start = "10:30"; End = "11:00"; Title = "Meeting" }
+    @{ Date = "2026-01-29"; Start = "11:00"; End = "12:00"; Title = "Meeting" }
+    @{ Date = "2026-01-29"; Start = "12:00"; End = "12:30"; Title = "Meeting" }
+    @{ Date = "2026-01-29"; Start = "13:00"; End = "14:00"; Title = "Meeting" }
+    @{ Date = "2026-01-29"; Start = "13:30"; End = "14:00"; Title = "Meeting" }
+    @{ Date = "2026-01-29"; Start = "14:35"; End = "15:30"; Title = "Meeting" }
+    @{ Date = "2026-01-29"; Start = "15:00"; End = "15:30"; Title = "Meeting" }
+    @{ Date = "2026-01-29"; Start = "15:30"; End = "16:00"; Title = "Meeting" }
     
     # Friday, Jan 30, 2026
-    @{ Date = "2026-01-30"; Start = "10:00"; End = "10:30"; Title = "FDE Engagement COO Agent Working Session" }
-    @{ Date = "2026-01-30"; Start = "10:30"; End = "11:00"; Title = "FDE Engagement WM Agent Working Session" }
-    @{ Date = "2026-01-30"; Start = "11:05"; End = "12:00"; Title = "The Friday Show!" }
-    @{ Date = "2026-01-30"; Start = "12:00"; End = "12:30"; Title = "WBD Copilot Extensibility sync" }
-    @{ Date = "2026-01-30"; Start = "12:00"; End = "13:00"; Title = "McKinsey + Teams PG: External Collaboration" }
-    @{ Date = "2026-01-30"; Start = "12:00"; End = "13:00"; Title = "CAPE / Copilot Studio Customer Engagement Sync" }
-    @{ Date = "2026-01-30"; Start = "12:00"; End = "13:00"; Title = "AI Agent Launchpad Series Option 2" }
+    @{ Date = "2026-01-30"; Start = "10:00"; End = "10:30"; Title = "Meeting" }
+    @{ Date = "2026-01-30"; Start = "10:30"; End = "11:00"; Title = "Meeting" }
+    @{ Date = "2026-01-30"; Start = "11:05"; End = "12:00"; Title = "Meeting" }
+    @{ Date = "2026-01-30"; Start = "12:00"; End = "12:30"; Title = "Meeting" }
+    @{ Date = "2026-01-30"; Start = "12:00"; End = "13:00"; Title = "Meeting" }
+    @{ Date = "2026-01-30"; Start = "12:00"; End = "13:00"; Title = "Meeting" }
+    @{ Date = "2026-01-30"; Start = "12:00"; End = "13:00"; Title = "Meeting" }
     
     # Monday, Feb 2, 2026
-    @{ Date = "2026-02-02"; Start = "10:05"; End = "10:30"; Title = "Core ESS Tooling vTeam Sync" }
-    @{ Date = "2026-02-02"; Start = "11:30"; End = "12:00"; Title = "Weekly Copilot Agent Framework feedback" }
-    @{ Date = "2026-02-02"; Start = "12:05"; End = "12:55"; Title = "Autonomous Agent + Flows PG&CAT sync" }
-    @{ Date = "2026-02-02"; Start = "12:05"; End = "12:30"; Title = "Copilot Studio CEMS Weekly Office Hours" }
-    @{ Date = "2026-02-02"; Start = "12:05"; End = "13:00"; Title = "US Architecture Review" }
-    @{ Date = "2026-02-02"; Start = "12:35"; End = "13:00"; Title = "Copilot Extensibility Systemic issue sync" }
-    @{ Date = "2026-02-02"; Start = "13:05"; End = "14:00"; Title = "Team Meeting" }
-    @{ Date = "2026-02-02"; Start = "14:05"; End = "14:35"; Title = "Weekly Build Team Meeting" }
-    @{ Date = "2026-02-02"; Start = "15:05"; End = "15:30"; Title = "1:1 Srinivas & Clint" }
+    @{ Date = "2026-02-02"; Start = "10:05"; End = "10:30"; Title = "Meeting" }
+    @{ Date = "2026-02-02"; Start = "11:30"; End = "12:00"; Title = "Meeting" }
+    @{ Date = "2026-02-02"; Start = "12:05"; End = "12:55"; Title = "Meeting" }
+    @{ Date = "2026-02-02"; Start = "12:05"; End = "12:30"; Title = "Meeting" }
+    @{ Date = "2026-02-02"; Start = "12:05"; End = "13:00"; Title = "Meeting" }
+    @{ Date = "2026-02-02"; Start = "12:35"; End = "13:00"; Title = "Meeting" }
+    @{ Date = "2026-02-02"; Start = "13:05"; End = "14:00"; Title = "Meeting" }
+    @{ Date = "2026-02-02"; Start = "14:05"; End = "14:35"; Title = "Meeting" }
+    @{ Date = "2026-02-02"; Start = "15:05"; End = "15:30"; Title = "Meeting" }
     
     # Tuesday, Feb 3, 2026
-    @{ Date = "2026-02-03"; Start = "09:30"; End = "10:45"; Title = "ETS Power Platform Workshops" }
-    @{ Date = "2026-02-03"; Start = "10:00"; End = "11:30"; Title = "FDE Engagement COO Agent Working Session" }
-    @{ Date = "2026-02-03"; Start = "11:00"; End = "12:00"; Title = "Microsoft 365 Platform Weekly series" }
-    @{ Date = "2026-02-03"; Start = "11:05"; End = "12:00"; Title = "Copilot Studio Office Hours (Technical)" }
-    @{ Date = "2026-02-03"; Start = "11:05"; End = "12:00"; Title = "BizChat Weekly Flight Review" }
-    @{ Date = "2026-02-03"; Start = "12:00"; End = "12:30"; Title = "WBD Copilot Extensibility sync Tuesday" }
-    @{ Date = "2026-02-03"; Start = "13:00"; End = "13:30"; Title = "Online A/B experimentation office hours" }
-    @{ Date = "2026-02-03"; Start = "13:05"; End = "14:00"; Title = "Partner Success Forum: Copilot Agents" }
-    @{ Date = "2026-02-03"; Start = "14:35"; End = "15:00"; Title = "1:1 Srinivas/Taiki" }
-    @{ Date = "2026-02-03"; Start = "15:35"; End = "16:00"; Title = "US Pod Stand Up" }
+    @{ Date = "2026-02-03"; Start = "09:30"; End = "10:45"; Title = "Meeting" }
+    @{ Date = "2026-02-03"; Start = "10:00"; End = "11:30"; Title = "Meeting" }
+    @{ Date = "2026-02-03"; Start = "11:00"; End = "12:00"; Title = "Meeting" }
+    @{ Date = "2026-02-03"; Start = "11:05"; End = "12:00"; Title = "Meeting" }
+    @{ Date = "2026-02-03"; Start = "11:05"; End = "12:00"; Title = "Meeting" }
+    @{ Date = "2026-02-03"; Start = "12:00"; End = "12:30"; Title = "Meeting" }
+    @{ Date = "2026-02-03"; Start = "13:00"; End = "13:30"; Title = "Meeting" }
+    @{ Date = "2026-02-03"; Start = "13:05"; End = "14:00"; Title = "Meeting" }
+    @{ Date = "2026-02-03"; Start = "14:35"; End = "15:00"; Title = "Meeting" }
+    @{ Date = "2026-02-03"; Start = "15:35"; End = "16:00"; Title = "Meeting" }
 )
 
 function Get-WorkingDays {
