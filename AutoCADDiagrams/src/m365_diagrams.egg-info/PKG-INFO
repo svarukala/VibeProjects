@@ -1,0 +1,22 @@
+Metadata-Version: 2.4
+Name: m365-diagrams
+Version: 1.0.0
+Summary: M365 Copilot Ecosystem Diagram Generator
+Author: Your Name
+Requires-Python: >=3.9
+Requires-Dist: diagrams>=0.24.4
+Requires-Dist: graphviz>=0.20.3
+Requires-Dist: typer>=0.9.0
+Requires-Dist: rich>=13.0.0
+Requires-Dist: openai>=1.0.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: python-docx>=1.1.0
+Requires-Dist: pypdf>=4.0.0
+Provides-Extra: drawio
+Requires-Dist: graphviz2drawio>=1.1.0; extra == "drawio"
+Dynamic: author
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

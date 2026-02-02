@@ -1,0 +1,41 @@
+"""Custom M365 icon definitions for diagram generation."""
+
+from .m365_icons import (
+    CopilotStudio,
+    M365Copilot,
+    AzureAIFoundry,
+    PowerApps,
+    PowerAutomate,
+    PowerBI,
+    PowerPages,
+    Dataverse,
+    SharePoint,
+    GraphAPI,
+    CustomConnector,
+    Teams,
+    Word,
+    Excel,
+    Outlook,
+    AzureOpenAI,
+    AzureAISearch,
+)
+
+__all__ = [
+    "CopilotStudio",
+    "M365Copilot",
+    "AzureAIFoundry",
+    "PowerApps",
+    "PowerAutomate",
+    "PowerBI",
+    "PowerPages",
+    "Dataverse",
+    "SharePoint",
+    "GraphAPI",
+    "CustomConnector",
+    "Teams",
+    "Word",
+    "Excel",
+    "Outlook",
+    "AzureOpenAI",
+    "AzureAISearch",
+]

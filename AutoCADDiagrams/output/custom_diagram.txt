@@ -1,0 +1,14 @@
++-----------------------------------------------------------+
+| User queries Copilot which retrieves data from SharePoint |
++-----------------------------------------------------------+
+
++--------------+     +--------------+     +--------------+
+|     User     | --> | M365 Copilot | --> |  SharePoint  |
++--------------+     +--------------+     +--------------+
+
+
+Legend:
+----------------------------------------
+  * User: End user interacting with the system
+  * M365 Copilot: Microsoft 365 Copilot AI assistant
+  * SharePoint: Document management & collaboration

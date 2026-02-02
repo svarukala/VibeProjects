@@ -1,0 +1,35 @@
+sec:
+  user_agent: "SEC-Connector/1.0 (your-email@example.com)"
+  rate_limit: 10
+  base_url: "https://www.sec.gov"
+  data_url: "https://data.sec.gov"
+
+azure:
+  tenant_id: ${AZURE_TENANT_ID}
+  client_id: ${AZURE_CLIENT_ID}
+  client_secret: ${AZURE_CLIENT_SECRET}
+  connection_id: "pysecfilings"
+  connection_name: "SEC EDGAR Filings"
+  connection_description: "SEC EDGAR filings including 10-K, 10-Q, 8-K, and DEF 14A forms"
+
+filings:
+  forms: ["10-K", "10-Q", "8-K", "DEF 14A"]
+
+chunking:
+  target_size: 4000
+  max_size: 8000
+  overlap: 200
+  max_item_bytes: 4194304  # 4 MB hard limit for Graph
+
+processing:
+  concurrent_downloads: 5
+  batch_size: 20
+
+test_mode:
+  max_filings: 2
+  max_pages: 5
+
+paths:
+  downloads: "data/downloads"
+  database: "data/state.db"
+  logs: "data/logs"

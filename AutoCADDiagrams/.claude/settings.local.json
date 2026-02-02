@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(m365-diagram templates:*)",
+      "Bash(PYTHONPATH=./src python:*)",
+      "Bash(where:*)",
+      "Bash(dir \"C:\\\\Program Files\\\\Graphviz*\" /b)",
+      "Bash(dir \"C:\\\\Program Files \\(x86\\)\\\\Graphviz*\" /b)",
+      "Bash(pip show:*)"
+    ]
+  }
+}

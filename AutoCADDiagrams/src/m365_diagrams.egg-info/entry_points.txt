@@ -1,0 +1,2 @@
+[console_scripts]
+m365-diagram = m365_diagrams.cli:app

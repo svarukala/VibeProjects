@@ -1,0 +1,95 @@
+You are an expert in Microsoft 365 and Azure architecture. Analyze the following document content and identify the architecture components and data flows described.
+
+## Your Task
+
+1. **Identify Components**: List all M365, Azure, and Power Platform components mentioned
+2. **Map Data Flows**: Describe how data moves between components
+3. **Identify User Interactions**: Note how users interact with the system
+4. **Find Integration Points**: Note any external systems or APIs
+
+## Document Content
+
+{document_text}
+
+## Output Format
+
+Return a JSON object with this exact structure:
+```json
+{
+    "title": "Suggested diagram title based on document content",
+    "components": ["Component1", "Component2"],
+    "flows": [
+        {"from": "Component1", "to": "Component2", "label": "description of data/action"},
+    ],
+    "clusters": [
+        {"name": "Cluster Name", "components": ["Component1", "Component2"]}
+    ],
+    "description": "Brief description of the architecture"
+}
+```
+
+## Valid Components (only use these exact names)
+
+**User & Interface:**
+- User
+
+**Microsoft 365:**
+- M365 Copilot
+- Copilot Studio
+- Teams
+- SharePoint
+- Word
+- Excel
+- Outlook
+
+**Power Platform:**
+- Power Apps
+- Power Automate
+- Power BI
+- Power Pages
+- Dataverse
+
+**Azure AI:**
+- Azure OpenAI
+- Azure AI Search
+- Azure AI Foundry
+
+**Integration & Data:**
+- Graph API
+- Custom Connector
+- SQL Database
+- Blob Storage
+- Logic Apps
+- Azure Functions
+
+## Guidelines
+
+1. Only include components that are explicitly mentioned or strongly implied in the document
+2. Create logical flows based on the described architecture
+3. Group related components into clusters (e.g., "Microsoft 365", "Azure AI", "Data Layer")
+4. Keep flow labels concise (2-4 words)
+5. If the document is unclear, make reasonable assumptions based on common M365 patterns
+
+## Example Output
+
+```json
+{
+    "title": "Copilot Document Assistant Architecture",
+    "components": ["User", "Teams", "M365 Copilot", "Graph API", "SharePoint", "Azure OpenAI"],
+    "flows": [
+        {"from": "User", "to": "Teams", "label": "interacts via"},
+        {"from": "Teams", "to": "M365 Copilot", "label": "sends query"},
+        {"from": "M365 Copilot", "to": "Graph API", "label": "requests data"},
+        {"from": "Graph API", "to": "SharePoint", "label": "fetches documents"},
+        {"from": "M365 Copilot", "to": "Azure OpenAI", "label": "generates response"}
+    ],
+    "clusters": [
+        {"name": "User Interface", "components": ["User", "Teams"]},
+        {"name": "Microsoft 365", "components": ["M365 Copilot", "Graph API", "SharePoint"]},
+        {"name": "Azure AI", "components": ["Azure OpenAI"]}
+    ],
+    "description": "Users interact with Copilot through Teams to query SharePoint documents using Azure OpenAI"
+}
+```
+
+Return ONLY the JSON object, no additional text or explanation.

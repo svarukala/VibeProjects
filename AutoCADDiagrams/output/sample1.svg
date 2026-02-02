@@ -1,0 +1,80 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1440" height="400" viewBox="0 0 1440 400">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666666" />
+    </marker>
+    <style type="text/css">
+            .node-rect { stroke: #333333; stroke-width: 2; }
+            .node-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: 600; fill: #ffffff; text-anchor: middle; dominant-baseline: middle; }
+            .edge-line { stroke: #666666; stroke-width: 2; fill: none; }
+            .edge-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; fill: #333333; text-anchor: middle; }
+            .cluster-rect { fill: #f5f5f5; stroke: #cccccc; stroke-width: 1; stroke-dasharray: 5,3; }
+            .cluster-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: 600; fill: #666666; }
+            .title-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 18px; font-weight: 700; fill: #333333; text-anchor: middle; }
+        </style>
+  </defs>
+  <title>Copilot studio custom agent that uses knowledge so...</title>
+  <rect width="100%" height="100%" fill="#ffffff" />
+  <g id="diagram">
+    <text x="720" y="30" class="title-text">Copilot studio custom agent that uses knowledge so...</text>
+    <g id="clusters" />
+    <g id="edges">
+      <g id="edge-0">
+        <line x1="190" y1="130" x2="245" y2="130" class="edge-line" marker-end="url(#arrowhead)" />
+      </g>
+      <g id="edge-1">
+        <line x1="390" y1="130" x2="445" y2="130" class="edge-line" marker-end="url(#arrowhead)" />
+      </g>
+      <g id="edge-2">
+        <line x1="590" y1="130" x2="645" y2="130" class="edge-line" marker-end="url(#arrowhead)" />
+      </g>
+      <g id="edge-3">
+        <line x1="790" y1="130" x2="845" y2="130" class="edge-line" marker-end="url(#arrowhead)" />
+      </g>
+      <g id="edge-4">
+        <line x1="990" y1="130" x2="1045" y2="130" class="edge-line" marker-end="url(#arrowhead)" />
+      </g>
+      <g id="edge-5">
+        <line x1="1190" y1="130" x2="1245" y2="130" class="edge-line" marker-end="url(#arrowhead)" />
+      </g>
+    </g>
+    <g id="nodes">
+      <g id="node-0">
+        <rect x="53" y="103" width="140" height="60" rx="8" ry="8" fill="#00000022" />
+        <rect x="50" y="100" width="140" height="60" rx="8" ry="8" fill="#6264A7" class="node-rect" />
+        <text x="120" y="130" class="node-text">M365 Copilot</text>
+      </g>
+      <g id="node-1">
+        <rect x="253" y="103" width="140" height="60" rx="8" ry="8" fill="#00000022" />
+        <rect x="250" y="100" width="140" height="60" rx="8" ry="8" fill="#6264A7" class="node-rect" />
+        <text x="320" y="130" class="node-text">Copilot Studio</text>
+      </g>
+      <g id="node-2">
+        <rect x="453" y="103" width="140" height="60" rx="8" ry="8" fill="#00000022" />
+        <rect x="450" y="100" width="140" height="60" rx="8" ry="8" fill="#038387" class="node-rect" />
+        <text x="520" y="130" class="node-text">SharePoint</text>
+      </g>
+      <g id="node-3">
+        <rect x="653" y="103" width="140" height="60" rx="8" ry="8" fill="#00000022" />
+        <rect x="650" y="100" width="140" height="60" rx="8" ry="8" fill="#742774" class="node-rect" />
+        <text x="720" y="130" class="node-text">Dataverse</text>
+      </g>
+      <g id="node-4">
+        <rect x="853" y="103" width="140" height="60" rx="8" ry="8" fill="#00000022" />
+        <rect x="850" y="100" width="140" height="60" rx="8" ry="8" fill="#0066FF" class="node-rect" />
+        <text x="920" y="130" class="node-text">Power Automate</text>
+      </g>
+      <g id="node-5">
+        <rect x="1053" y="103" width="140" height="60" rx="8" ry="8" fill="#00000022" />
+        <rect x="1050" y="100" width="140" height="60" rx="8" ry="8" fill="#F2C811" class="node-rect" />
+        <text x="1120" y="130" class="node-text">Power BI</text>
+      </g>
+      <g id="node-6">
+        <rect x="1253" y="103" width="140" height="60" rx="8" ry="8" fill="#00000022" />
+        <rect x="1250" y="100" width="140" height="60" rx="8" ry="8" fill="#666666" class="node-rect" />
+        <text x="1320" y="130" class="node-text">Custom Connector</text>
+      </g>
+    </g>
+  </g>
+</svg>
