@@ -64,6 +64,17 @@ Each stage checkpoints to SQLite - resume from any failure point.
 - 200-char overlap for context continuity
 - Validation: reject/split any chunk exceeding 4 MB
 
+> **FYI — Chunking Size Defaults**
+>
+> | Setting | Value | Purpose |
+> |---------|-------|---------|
+> | `target_size` | 4,000 chars | Ideal chunk size for splitting |
+> | `max_size` | 8,000 chars | Upper limit before forced split |
+> | `overlap` | 200 chars | Context overlap between chunks |
+> | `max_item_bytes` | 4,194,304 (4 MB) | Hard limit per Graph external item |
+>
+> Chunking priority: page markers → section headers → size-based fallback. Any chunk exceeding 4 MB is further split by `enforce_size_limit`.
+
 ### 4. State Manager (`state_manager.py`)
 - SQLite database for tracking: `filings` and `chunks` tables
 - State machine: PENDING → DOWNLOADED → PARSED → UPLOADED → COMPLETED
