@@ -3,7 +3,8 @@
     "allow": [
       "Bash(dir:*)",
       "Bash(tree:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(pip install:*)"
     ]
   }
 }

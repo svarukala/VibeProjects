@@ -1,6 +1,7 @@
 """Main orchestration pipeline for SEC filing ingestion."""
 
 import asyncio
+import json
 import traceback
 from pathlib import Path
 from typing import Optional
@@ -29,11 +30,29 @@ logger = get_logger("pipeline")
 class IngestionPipeline:
     """Orchestrates the full ingestion pipeline."""
 
-    def __init__(self, config: AppConfig, test_mode: bool = False):
+    def __init__(self, config: AppConfig, test_mode: bool = False, save_payloads: bool = False):
         self.config = config
         self.test_mode = test_mode
+        self.save_payloads = save_payloads
         self.download_dir = Path(config.paths.downloads)
+        self.payload_dir = Path(config.paths.payloads)
         self.db_path = Path(config.paths.database)
+
+    def _save_payloads(self, chunks: list, graph: GraphClient) -> None:
+        """Save chunk payloads as JSON files to disk before upload."""
+        for chunk in chunks:
+            payload = graph.build_payload(chunk)
+            payload_dir = (
+                self.payload_dir
+                / chunk.filing.ticker
+                / chunk.filing.accession_no_dashes
+            )
+            payload_dir.mkdir(parents=True, exist_ok=True)
+            payload_file = payload_dir / f"{chunk.chunk_id}.json"
+            payload_file.write_text(
+                json.dumps(payload, indent=2, default=str), encoding="utf-8"
+            )
+        logger.info(f"Saved {len(chunks)} payload files to {self.payload_dir}")
 
     async def setup(self) -> None:
         """Set up Graph connection and schema."""
@@ -230,6 +249,9 @@ class IngestionPipeline:
 
                 stats["chunks_created"] += len(all_chunks)
 
+                if self.save_payloads:
+                    self._save_payloads(all_chunks, graph)
+
                 for i in range(0, len(all_chunks), self.config.processing.batch_size):
                     batch = all_chunks[i : i + self.config.processing.batch_size]
                     successful, failed = await graph.upload_items_batch(batch)
@@ -324,6 +346,9 @@ class IngestionPipeline:
                         for chunk in chunks:
                             if chunk.chunk_id in pending_ids:
                                 chunks_to_upload.append(chunk)
+
+                    if self.save_payloads:
+                        self._save_payloads(chunks_to_upload, graph)
 
                     for i in range(0, len(chunks_to_upload), self.config.processing.batch_size):
                         batch = chunks_to_upload[i : i + self.config.processing.batch_size]

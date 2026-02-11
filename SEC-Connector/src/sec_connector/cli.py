@@ -147,8 +147,9 @@ def setup(ctx, connection_id: Optional[str]):
 @click.option("--test", is_flag=True, help="Run in test mode (limited filings)")
 @click.option("--max-filings", type=int, help="Maximum filings per ticker")
 @click.option("--max-pages", type=int, help="Maximum pages per filing")
+@click.option("--save-payloads", is_flag=True, default=False, help="Save upload payloads as JSON files to data/payloads/")
 @click.pass_context
-def ingest(ctx, tickers: str, connection_id: Optional[str], test: bool, max_filings: Optional[int], max_pages: Optional[int]):
+def ingest(ctx, tickers: str, connection_id: Optional[str], test: bool, max_filings: Optional[int], max_pages: Optional[int], save_payloads: bool):
     """Ingest SEC filings for specified tickers."""
     config = ctx.obj["config"]
 
@@ -173,7 +174,7 @@ def ingest(ctx, tickers: str, connection_id: Optional[str], test: bool, max_fili
     if test:
         console.print("[yellow]Running in TEST MODE[/]")
 
-    pipeline = IngestionPipeline(config, test_mode=test)
+    pipeline = IngestionPipeline(config, test_mode=test, save_payloads=save_payloads)
 
     try:
         stats = run_async(pipeline.ingest(
@@ -191,8 +192,9 @@ def ingest(ctx, tickers: str, connection_id: Optional[str], test: bool, max_fili
 
 @main.command()
 @click.option("--connection-id", "-n", help="Connection ID for Graph connector")
+@click.option("--save-payloads", is_flag=True, default=False, help="Save upload payloads as JSON files to data/payloads/")
 @click.pass_context
-def resume(ctx, connection_id: Optional[str]):
+def resume(ctx, connection_id: Optional[str], save_payloads: bool):
     """Resume interrupted processing."""
     config = ctx.obj["config"]
 
@@ -206,7 +208,7 @@ def resume(ctx, connection_id: Optional[str]):
     console.print("[bold]Resuming interrupted processing...[/]")
     console.print(f"[dim]Connection ID: {config.azure.connection_id}[/]")
 
-    pipeline = IngestionPipeline(config)
+    pipeline = IngestionPipeline(config, save_payloads=save_payloads)
 
     try:
         stats = run_async(pipeline.resume())

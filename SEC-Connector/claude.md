@@ -25,6 +25,7 @@ C:\vibe\SEC-Connector\
 │   └── utils.py                # Retry, logging utilities
 ├── data/                       # Runtime data (gitignored)
 │   ├── downloads/              # Cached SEC filings
+│   ├── payloads/               # Saved upload payloads (--save-payloads)
 │   ├── state.db                # Processing state
 │   └── logs/                   # Log files
 └── tests/
@@ -83,8 +84,15 @@ sec-connector ingest -t AAPL --test
 # Full ingestion
 sec-connector ingest -t AAPL,MSFT,GOOG
 
+# Save upload payloads as JSON to data/payloads/ (off by default)
+sec-connector ingest -t AAPL --test --save-payloads
+sec-connector ingest -t AAPL,MSFT,GOOG --save-payloads
+
 # Resume interrupted processing
 sec-connector resume
+
+# Resume with payload saving
+sec-connector resume --save-payloads
 
 # Check status
 sec-connector status
@@ -135,10 +143,11 @@ sec-connector status
 
 ## Verification Steps
 1. Run `sec-connector setup` to create Graph connection
-2. Run `sec-connector ingest -t AAPL --test` for quick test
-3. Verify items in Microsoft 365 Admin → Search & Intelligence → Connectors
-4. Test in Copilot: "What are Apple's recent SEC filings?"
-5. Run full ingestion with desired tickers
+2. Run `sec-connector ingest -t AAPL --test --save-payloads` for quick test with payload inspection
+3. Review saved payloads in `data/payloads/{ticker}/{accession}/` to verify content before upload
+4. Verify items in Microsoft 365 Admin → Search & Intelligence → Connectors
+5. Test in Copilot: "What are Apple's recent SEC filings?"
+6. Run full ingestion with desired tickers
 
 ## Configuration (config/config.yaml)
 ```yaml

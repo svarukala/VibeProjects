@@ -56,6 +56,7 @@ class TestModeConfig(BaseModel):
 class PathsConfig(BaseModel):
     """File paths configuration."""
     downloads: str = "data/downloads"
+    payloads: str = "data/payloads"
     database: str = "data/state.db"
     logs: str = "data/logs"
 
@@ -111,7 +112,7 @@ def load_config(config_path: Optional[Path] = None) -> AppConfig:
 
 def ensure_directories(config: AppConfig) -> None:
     """Create required directories if they don't exist."""
-    for path_attr in ["downloads", "database", "logs"]:
+    for path_attr in ["downloads", "payloads", "database", "logs"]:
         path = Path(getattr(config.paths, path_attr))
         if path_attr == "database":
             path = path.parent

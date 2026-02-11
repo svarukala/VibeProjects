@@ -263,6 +263,23 @@ class GraphClient:
             content=content,
         )
 
+    def build_payload(self, chunk: ContentChunk) -> dict:
+        """Build the Graph API payload dict for a chunk.
+
+        Args:
+            chunk: Content chunk
+
+        Returns:
+            Payload dict matching what gets sent to Graph API
+        """
+        item = self._chunk_to_external_item(chunk)
+        return {
+            "id": item.id,
+            "properties": item.properties,
+            "content": item.content,
+            "acl": item.acl,
+        }
+
     async def upload_item(self, chunk: ContentChunk) -> dict:
         """Upload a single external item.
 

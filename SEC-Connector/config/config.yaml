@@ -31,5 +31,6 @@ test_mode:
 
 paths:
   downloads: "data/downloads"
+  payloads: "data/payloads"
   database: "data/state.db"
   logs: "data/logs"
