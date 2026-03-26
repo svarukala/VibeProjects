@@ -50,21 +50,25 @@ def sanitize_connection_id(name: str) -> str:
     return sanitized.lower()
 
 
-def prompt_for_connection_id() -> str:
-    """Prompt user for connection ID and sanitize it."""
+def prompt_for_connection_id() -> tuple[str, str]:
+    """Prompt user for connection name and derive the sanitized ID.
+
+    Returns:
+        Tuple of (connection_id, connection_name).
+    """
     console.print("\n[bold cyan]Graph Connector Configuration[/]")
-    console.print("The connection ID identifies your connector in Microsoft 365.")
-    console.print("[dim]Note: Only alphanumeric characters are allowed.[/]\n")
+    console.print("The connection name identifies your connector in Microsoft 365.")
+    console.print("[dim]The connection ID (alphanumeric) is derived automatically.[/]\n")
 
     while True:
         name = click.prompt("Enter a name for your connector", default="SEC Filings")
         sanitized = sanitize_connection_id(name)
 
-        console.print(f"\n  Your input: [yellow]{name}[/]")
-        console.print(f"  Connection ID: [green]{sanitized}[/]\n")
+        console.print(f"\n  Connection name: [yellow]{name}[/]")
+        console.print(f"  Connection ID:   [green]{sanitized}[/]\n")
 
-        if click.confirm("Use this connection ID?", default=True):
-            return sanitized
+        if click.confirm("Use this connection?", default=True):
+            return sanitized, name
         console.print()
 
 
@@ -87,29 +91,25 @@ def main(ctx, config: Optional[str], connection_id: Optional[str], verbose: bool
     setup_logging(log_dir, verbose)
 
 
-def get_connection_id(ctx) -> str:
-    """Get connection ID from CLI option or prompt user."""
-    config = ctx.obj["config"]
-    override = ctx.obj.get("connection_id_override")
+def apply_connection_config(config, connection_id: Optional[str] = None, connection_name: Optional[str] = None) -> None:
+    """Apply connection ID and name to the config object.
 
-    if override:
-        sanitized = sanitize_connection_id(override)
-        if sanitized != override:
-            console.print(f"[yellow]Connection ID sanitized: {override} -> {sanitized}[/]")
-        return sanitized
-
-    # Check if we should prompt (only for setup command typically)
-    if ctx.invoked_subcommand == "setup":
-        return prompt_for_connection_id()
-
-    # Use config default
-    return config.azure.connection_id
+    Args:
+        config: AppConfig to update
+        connection_id: Sanitized connection ID
+        connection_name: Human-readable display name for the connection
+    """
+    if connection_id:
+        config.azure.connection_id = connection_id
+    if connection_name:
+        config.azure.connection_name = connection_name
 
 
 @main.command()
 @click.option("--connection-id", "-n", help="Connection ID for Graph connector")
+@click.option("--connection-name", help="Display name for the connector in Microsoft 365")
 @click.pass_context
-def setup(ctx, connection_id: Optional[str]):
+def setup(ctx, connection_id: Optional[str], connection_name: Optional[str]):
     """Set up the Graph connector and schema."""
     config = ctx.obj["config"]
 
@@ -118,19 +118,25 @@ def setup(ctx, connection_id: Optional[str]):
         console.print("Set AZURE_TENANT_ID, AZURE_CLIENT_ID, and AZURE_CLIENT_SECRET environment variables.")
         raise SystemExit(1)
 
-    # Get connection ID from option, parent option, or prompt
+    # Get connection ID and name from option, parent option, or prompt
     if connection_id:
         conn_id = sanitize_connection_id(connection_id)
+        conn_name = connection_name or connection_id
         if conn_id != connection_id:
             console.print(f"[yellow]Connection ID sanitized: {connection_id} -> {conn_id}[/]")
     elif ctx.obj.get("connection_id_override"):
-        conn_id = sanitize_connection_id(ctx.obj["connection_id_override"])
+        raw = ctx.obj["connection_id_override"]
+        conn_id = sanitize_connection_id(raw)
+        conn_name = connection_name or raw
     else:
-        conn_id = prompt_for_connection_id()
+        conn_id, conn_name = prompt_for_connection_id()
+        # CLI --connection-name overrides the prompted name
+        if connection_name:
+            conn_name = connection_name
 
-    # Update config with the connection ID
-    config.azure.connection_id = conn_id
-    console.print(f"[bold]Using connection ID: [green]{conn_id}[/][/]")
+    apply_connection_config(config, conn_id, conn_name)
+    console.print(f"[bold]Connection name: [yellow]{config.azure.connection_name}[/][/]")
+    console.print(f"[bold]Connection ID:   [green]{config.azure.connection_id}[/][/]")
 
     pipeline = IngestionPipeline(config)
 
@@ -144,23 +150,27 @@ def setup(ctx, connection_id: Optional[str]):
 @main.command()
 @click.option("--tickers", "-t", required=True, help="Comma-separated list of ticker symbols")
 @click.option("--connection-id", "-n", help="Connection ID for Graph connector")
+@click.option("--connection-name", help="Display name for the connector in Microsoft 365")
 @click.option("--test", is_flag=True, help="Run in test mode (limited filings)")
 @click.option("--max-filings", type=int, help="Maximum filings per ticker")
 @click.option("--max-pages", type=int, help="Maximum pages per filing")
 @click.option("--save-payloads", is_flag=True, default=False, help="Save upload payloads as JSON files to data/payloads/")
 @click.pass_context
-def ingest(ctx, tickers: str, connection_id: Optional[str], test: bool, max_filings: Optional[int], max_pages: Optional[int], save_payloads: bool):
+def ingest(ctx, tickers: str, connection_id: Optional[str], connection_name: Optional[str], test: bool, max_filings: Optional[int], max_pages: Optional[int], save_payloads: bool):
     """Ingest SEC filings for specified tickers."""
     config = ctx.obj["config"]
 
-    # Get connection ID
+    # Apply connection overrides
     if connection_id:
         conn_id = sanitize_connection_id(connection_id)
         if conn_id != connection_id:
             console.print(f"[yellow]Connection ID sanitized: {connection_id} -> {conn_id}[/]")
-        config.azure.connection_id = conn_id
+        apply_connection_config(config, conn_id, connection_name or connection_id)
     elif ctx.obj.get("connection_id_override"):
-        config.azure.connection_id = sanitize_connection_id(ctx.obj["connection_id_override"])
+        raw = ctx.obj["connection_id_override"]
+        apply_connection_config(config, sanitize_connection_id(raw), connection_name or raw)
+    elif connection_name:
+        apply_connection_config(config, connection_name=connection_name)
 
     ticker_list = [t.strip().upper() for t in tickers.split(",")]
 
@@ -169,7 +179,7 @@ def ingest(ctx, tickers: str, connection_id: Optional[str], test: bool, max_fili
         raise SystemExit(1)
 
     console.print(f"[bold]SEC Connector - Ingesting filings for: {', '.join(ticker_list)}[/]")
-    console.print(f"[dim]Connection ID: {config.azure.connection_id}[/]")
+    console.print(f"[dim]Connection: {config.azure.connection_name} ({config.azure.connection_id})[/]")
 
     if test:
         console.print("[yellow]Running in TEST MODE[/]")
@@ -192,21 +202,24 @@ def ingest(ctx, tickers: str, connection_id: Optional[str], test: bool, max_fili
 
 @main.command()
 @click.option("--connection-id", "-n", help="Connection ID for Graph connector")
+@click.option("--connection-name", help="Display name for the connector in Microsoft 365")
 @click.option("--save-payloads", is_flag=True, default=False, help="Save upload payloads as JSON files to data/payloads/")
 @click.pass_context
-def resume(ctx, connection_id: Optional[str], save_payloads: bool):
+def resume(ctx, connection_id: Optional[str], connection_name: Optional[str], save_payloads: bool):
     """Resume interrupted processing."""
     config = ctx.obj["config"]
 
-    # Get connection ID
+    # Apply connection overrides
     if connection_id:
-        conn_id = sanitize_connection_id(connection_id)
-        config.azure.connection_id = conn_id
+        apply_connection_config(config, sanitize_connection_id(connection_id), connection_name or connection_id)
     elif ctx.obj.get("connection_id_override"):
-        config.azure.connection_id = sanitize_connection_id(ctx.obj["connection_id_override"])
+        raw = ctx.obj["connection_id_override"]
+        apply_connection_config(config, sanitize_connection_id(raw), connection_name or raw)
+    elif connection_name:
+        apply_connection_config(config, connection_name=connection_name)
 
     console.print("[bold]Resuming interrupted processing...[/]")
-    console.print(f"[dim]Connection ID: {config.azure.connection_id}[/]")
+    console.print(f"[dim]Connection: {config.azure.connection_name} ({config.azure.connection_id})[/]")
 
     pipeline = IngestionPipeline(config, save_payloads=save_payloads)
 
@@ -230,13 +243,13 @@ def status(ctx, connection_id: Optional[str]):
     """Show processing status."""
     config = ctx.obj["config"]
 
-    # Get connection ID
+    # Apply connection overrides
     if connection_id:
-        config.azure.connection_id = sanitize_connection_id(connection_id)
+        apply_connection_config(config, sanitize_connection_id(connection_id))
     elif ctx.obj.get("connection_id_override"):
-        config.azure.connection_id = sanitize_connection_id(ctx.obj["connection_id_override"])
+        apply_connection_config(config, sanitize_connection_id(ctx.obj["connection_id_override"]))
 
-    console.print(f"[dim]Connection ID: {config.azure.connection_id}[/]")
+    console.print(f"[dim]Connection: {config.azure.connection_name} ({config.azure.connection_id})[/]")
 
     pipeline = IngestionPipeline(config)
 
@@ -278,13 +291,13 @@ def reset(ctx, connection_id: Optional[str]):
     """Reset the connector (delete connection and state)."""
     config = ctx.obj["config"]
 
-    # Get connection ID
+    # Apply connection overrides
     if connection_id:
-        config.azure.connection_id = sanitize_connection_id(connection_id)
+        apply_connection_config(config, sanitize_connection_id(connection_id))
     elif ctx.obj.get("connection_id_override"):
-        config.azure.connection_id = sanitize_connection_id(ctx.obj["connection_id_override"])
+        apply_connection_config(config, sanitize_connection_id(ctx.obj["connection_id_override"]))
 
-    console.print(f"[dim]Connection ID: {config.azure.connection_id}[/]")
+    console.print(f"[dim]Connection: {config.azure.connection_name} ({config.azure.connection_id})[/]")
 
     pipeline = IngestionPipeline(config)
 

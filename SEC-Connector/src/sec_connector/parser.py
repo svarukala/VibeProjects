@@ -13,6 +13,52 @@ from .utils import get_logger
 logger = get_logger("parser")
 
 
+def _parse_dimension_inches(el) -> tuple[Optional[float], Optional[float]]:
+    """Extract width and height from an element's style or attributes, in inches.
+
+    Handles both inline CSS (style="width:0.14in;height:0.90in") and
+    HTML attributes (width="10" height="65"), converting px to inches
+    at 96 dpi.
+    """
+    style = el.get("style", "")
+
+    # Try inline CSS first (inches)
+    w_match = re.search(r"width:\s*([\d.]+)in", style)
+    h_match = re.search(r"height:\s*([\d.]+)in", style)
+    if w_match and h_match:
+        return float(w_match.group(1)), float(h_match.group(1))
+
+    # Try inline CSS (px) — convert at 96 dpi
+    w_match = re.search(r"width:\s*([\d.]+)px", style)
+    h_match = re.search(r"height:\s*([\d.]+)px", style)
+    if w_match and h_match:
+        return float(w_match.group(1)) / 96, float(h_match.group(1)) / 96
+
+    # Try HTML attributes (assumed px at 96 dpi)
+    w_attr = el.get("width")
+    h_attr = el.get("height")
+    if w_attr and h_attr:
+        try:
+            return float(w_attr) / 96, float(h_attr) / 96
+        except ValueError:
+            pass
+
+    return None, None
+
+
+def _is_rotated_text_image(el) -> bool:
+    """Detect images that are likely rotated text (narrow width, taller height).
+
+    SEC filings often render vertically-oriented table headers as small images
+    with width << height. These typically have width ~0.13-0.15in and height
+    varying by name length.
+    """
+    w, h = _parse_dimension_inches(el)
+    if w is not None and h is not None:
+        return w < 0.3 and h > w * 2
+    return False
+
+
 class SECMarkdownConverter(MarkdownConverter):
     """Custom markdown converter for SEC filings."""
 
@@ -52,6 +98,27 @@ class SECMarkdownConverter(MarkdownConverter):
 
         return "\n" + "\n".join(md_rows) + "\n\n"
 
+    def convert_img(self, el, text=None, *args, **kwargs):
+        """Handle <img> tags in SEC filings.
+
+        - Rotated text images (narrow width, tall): replace with [image: rotated text]
+          marker so downstream processing can identify these gaps.
+        - Generic alt="LOGO" images: strip entirely (decorative logos, icons, etc.)
+        - Images with meaningful alt text: preserve as [alt text].
+        """
+        alt = (el.get("alt") or "").strip()
+
+        if _is_rotated_text_image(el):
+            # Mark as rotated text so it's clear something is missing
+            return "[rotated text]"
+
+        if alt.upper() == "LOGO" or not alt:
+            # Decorative image — strip it
+            return ""
+
+        # Meaningful alt text — keep it
+        return f"[{alt}]"
+
     def convert_br(self, el, text=None, *args, **kwargs):
         """Convert <br> to newline."""
         return "\n"
@@ -61,11 +128,150 @@ class SECMarkdownConverter(MarkdownConverter):
         return "\n---\n"
 
 
-def html_to_markdown(html: str) -> str:
+def _ocr_image(image, ocr_engine: str, easyocr_reader=None):
+    """Run OCR on a PIL Image and return extracted text.
+
+    Args:
+        image: PIL Image (already rotated/scaled as needed)
+        ocr_engine: "easyocr" or "pytesseract"
+        easyocr_reader: Initialized easyocr.Reader (required if engine is easyocr)
+
+    Returns:
+        Extracted text string, or empty string on failure.
+    """
+    import numpy as np
+
+    img_array = np.array(image)
+
+    if ocr_engine == "easyocr":
+        results = easyocr_reader.readtext(img_array, detail=0)
+        return " ".join(results).strip()
+    else:
+        import pytesseract
+        return pytesseract.image_to_string(image, config="--psm 7").strip()
+
+
+def _clean_ocr_text(text: str) -> str:
+    """Clean common OCR artifacts from short text strings (names, labels).
+
+    Typical artifacts on tiny SEC images:
+    - Punctuation misreads: "A:" -> "A.", "S_" -> "S."
+    - Stray digits near punctuation: "S_ 3 Demchak" -> "S. Demchak"
+    - Leading/trailing noise characters
+    """
+    # Fix misread periods (colon/underscore followed by optional stray digits before a capital)
+    text = re.sub(r"(\w)[_:]\s*\d*\s+(?=[A-Z])", r"\1. ", text)
+    # Strip leading/trailing non-alpha noise (but keep periods in names)
+    text = re.sub(r"^[^A-Za-z]+", "", text)
+    text = re.sub(r"[^A-Za-z.]+$", "", text)
+    return text.strip()
+
+
+def resolve_rotated_text_images(
+    soup: BeautifulSoup,
+    base_url: str,
+    user_agent: str = "SEC-Connector/1.0 (sec-connector@example.com)",
+) -> int:
+    """Download and OCR rotated-text images, replacing them with extracted text in the DOM.
+
+    SEC filings commonly render vertically-oriented table column headers as small
+    JPG images (e.g., director names rotated 90°). This function detects those
+    images, downloads them from SEC, rotates and upscales them, then OCRs the text.
+
+    Requires: Pillow + (easyocr or pytesseract with Tesseract installed).
+    If dependencies are missing, returns 0 (graceful degradation).
+
+    Args:
+        soup: Parsed BeautifulSoup DOM (modified in place)
+        base_url: Base URL for resolving relative image src paths
+        user_agent: User-Agent header for SEC requests
+
+    Returns:
+        Number of images successfully resolved.
+    """
+    try:
+        from io import BytesIO
+        from PIL import Image
+        import requests as sync_requests
+    except ImportError:
+        logger.debug("Pillow not available — skipping rotated text image resolution")
+        return 0
+
+    # Try to import an OCR engine (easyocr preferred, pytesseract as fallback)
+    ocr_engine = None
+    easyocr_reader = None
+    try:
+        import easyocr
+        easyocr_reader = easyocr.Reader(["en"], verbose=False)
+        ocr_engine = "easyocr"
+    except ImportError:
+        try:
+            import pytesseract  # noqa: F401
+            ocr_engine = "pytesseract"
+        except ImportError:
+            logger.debug("No OCR engine available (install easyocr or pytesseract)")
+            return 0
+
+    # Collect rotated-text images before iterating (avoid mutating during traversal)
+    rotated_imgs = [
+        img for img in soup.find_all("img")
+        if _is_rotated_text_image(img) and img.get("src")
+    ]
+
+    if not rotated_imgs:
+        return 0
+
+    logger.info(f"Found {len(rotated_imgs)} rotated-text images, resolving with {ocr_engine}")
+
+    resolved = 0
+    session = sync_requests.Session()
+    session.headers["User-Agent"] = user_agent
+
+    for img_tag in rotated_imgs:
+        src = img_tag["src"]
+
+        # Build absolute URL
+        img_url = src if src.startswith("http") else base_url.rstrip("/") + "/" + src
+
+        try:
+            resp = session.get(img_url, timeout=10)
+            resp.raise_for_status()
+
+            image = Image.open(BytesIO(resp.content))
+
+            # Rotate 90° clockwise (text is rendered bottom-to-top)
+            rotated = image.rotate(-90, expand=True)
+
+            # Upscale tiny images for better OCR accuracy
+            w, h = rotated.size
+            if h < 100:
+                scale = max(3, 100 // h)
+                rotated = rotated.resize((w * scale, h * scale), Image.LANCZOS)
+
+            text = _ocr_image(rotated, ocr_engine, easyocr_reader)
+
+            if text and len(text) > 1:
+                text = _clean_ocr_text(text)
+                img_tag.replace_with(text)
+                logger.info(f"OCR resolved: {src} -> '{text}'")
+                resolved += 1
+            else:
+                logger.debug(f"OCR returned empty for {src}")
+        except Exception as e:
+            logger.debug(f"Failed to OCR {src}: {e}")
+
+    session.close()
+    return resolved
+
+
+def html_to_markdown(html: str, base_url: Optional[str] = None) -> str:
     """Convert HTML content to Markdown.
 
     Args:
         html: HTML content string
+        base_url: Optional base URL for resolving image sources for OCR.
+                  If provided and OCR dependencies are installed, rotated-text
+                  images will be resolved to actual text.
 
     Returns:
         Markdown formatted string
@@ -75,8 +281,12 @@ def html_to_markdown(html: str) -> str:
     for tag in soup.find_all(["script", "style", "meta", "link"]):
         tag.decompose()
 
+    # Resolve rotated text images via OCR before stripping styles
+    if base_url:
+        resolve_rotated_text_images(soup, base_url)
+
     for tag in soup.find_all(True):
-        if tag.get("style"):
+        if tag.get("style") and tag.name != "img":
             del tag["style"]
         if tag.get("class"):
             del tag["class"]
