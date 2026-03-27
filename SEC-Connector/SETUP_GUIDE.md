@@ -195,10 +195,10 @@ Usage: sec-connector [OPTIONS] COMMAND [ARGS]...
   SEC Copilot Connector - Import SEC EDGAR filings into Microsoft 365.
 
 Options:
-  -c, --config PATH       Path to config file
-  -n, --connection-id TEXT  Connection ID for Graph connector
-  -v, --verbose           Enable verbose logging
-  --help                  Show this message and exit.
+  -c, --config PATH         Path to config file
+  -n, --connection-id TEXT  Connection ID for Graph connector (alphanumeric only)
+  -v, --verbose             Enable verbose logging
+  --help                    Show this message and exit.
 
 Commands:
   ingest  Ingest SEC filings for specified tickers.
@@ -269,7 +269,9 @@ azure:
   tenant_id: ${AZURE_TENANT_ID}
   client_id: ${AZURE_CLIENT_ID}
   client_secret: ${AZURE_CLIENT_SECRET}
-  connection_id: "secfilings"  # Default, can be overridden via CLI
+  connection_id: "pysecfilings"           # Default, can be overridden via CLI
+  connection_name: "SEC EDGAR Filings"    # Display name in Microsoft 365 Admin Center
+  connection_description: "SEC EDGAR filings including 10-K, 10-Q, 8-K, and DEF 14A forms"
 
 filings:
   forms: ["10-K", "10-Q", "8-K", "DEF 14A"]  # Filing types to process
@@ -279,10 +281,17 @@ chunking:
   max_size: 8000      # Maximum chunk size
   overlap: 200        # Overlap between chunks
 
+processing:
+  concurrent_downloads: 5   # Parallel SEC downloads
+  batch_size: 20            # Items per Graph API batch upload
+  ocr_images: true          # OCR rotated-text images (e.g., vertical column headers)
+
 test_mode:
   max_filings: 2      # Filings per ticker in test mode
   max_pages: 5        # Pages per filing in test mode
 ```
+
+> **OCR Note**: When `ocr_images` is `true` (or the `--ocr` CLI flag is used), the parser downloads images referenced in SEC filings and runs OCR to recover text from rotated-text images. This is common in financial tables where column headers are rendered as rotated image labels (which would otherwise appear as `LOGO` placeholders). Requires `easyocr` or `pytesseract` to be installed.
 
 ---
 
@@ -296,24 +305,35 @@ Run the setup command to create the Microsoft Graph connection and schema:
 sec-connector setup
 ```
 
-You'll be prompted to enter a connector name:
+You'll be prompted to enter a connector name. The connection ID is derived automatically:
 
 ```
 Graph Connector Configuration
-The connection ID identifies your connector in Microsoft 365.
-Note: Only alphanumeric characters are allowed.
+The connection name identifies your connector in Microsoft 365.
+The connection ID (alphanumeric) is derived automatically.
 
 Enter a name for your connector [SEC Filings]: My SEC Filings
 
-  Your input: My SEC Filings
-  Connection ID: mysecfilings
+  Connection name: My SEC Filings
+  Connection ID:   mysecfilings
 
-Use this connection ID? [Y/n]: y
-Using connection ID: mysecfilings
+Use this connection? [Y/n]: y
+Connection name: My SEC Filings
+Connection ID:   mysecfilings
 Setting up Graph connector...
 Waiting for schema to be ready (this may take a few minutes)...
 Schema is ready
 Setup complete! Connection is ready.
+```
+
+You can also provide the connection name and ID directly via CLI options:
+
+```powershell
+# Provide both name and ID
+sec-connector setup --connection-name "PNC SEC Filings" -n pncsecfilings
+
+# Provide just the ID (name defaults to the ID value)
+sec-connector setup -n mysecfilings
 ```
 
 **Note**: Schema provisioning can take 2-5 minutes. The command will wait automatically.
@@ -326,10 +346,19 @@ Run a test ingestion with limited data:
 sec-connector ingest -t AAPL --test -n mysecfilings
 ```
 
+To also enable OCR for rotated-text images (column headers rendered as images):
+
+```powershell
+sec-connector ingest -t AAPL --test -n mysecfilings --ocr
+```
+
+> **Tip**: If `ocr_images: true` is set in `config/config.yaml`, OCR is enabled by default and the `--ocr` flag is not needed.
+
 Expected output:
 ```
 SEC Connector - Ingesting filings for: AAPL
-Connection ID: mysecfilings
+Connection: SEC EDGAR Filings (mysecfilings)
+OCR enabled for rotated-text images
 Running in TEST MODE
 Test mode: 2 filings, 5 pages max
 ...
@@ -363,6 +392,15 @@ sec-connector ingest -t AAPL,MSFT,GOOG,AMZN -n mysecfilings
 
 # With limits
 sec-connector ingest -t AAPL --max-filings 10 -n mysecfilings
+
+# With OCR enabled (if not already enabled in config.yaml)
+sec-connector ingest -t AAPL -n mysecfilings --ocr
+
+# Save upload payloads as JSON for inspection
+sec-connector ingest -t AAPL -n mysecfilings --save-payloads
+
+# With a custom display name
+sec-connector ingest -t AAPL -n mysecfilings --connection-name "My SEC Filings"
 ```
 
 ### Step 4: Monitor Progress
@@ -375,7 +413,7 @@ sec-connector status -n mysecfilings
 
 Output:
 ```
-Connection ID: mysecfilings
+Connection: SEC EDGAR Filings (mysecfilings)
 
 Processing Status:
 
@@ -403,7 +441,11 @@ Processing Status:
 If any uploads failed (e.g., due to network issues), resume them:
 
 ```powershell
-sec-connector resume -n mysecfilings
+# Resume with OCR (if not enabled in config)
+sec-connector resume -n mysecfilings --ocr
+
+# Resume with payload saving
+sec-connector resume -n mysecfilings --save-payloads
 ```
 
 ---
@@ -413,8 +455,11 @@ sec-connector resume -n mysecfilings
 ### Basic Commands
 
 ```powershell
-# Setup a new connector
+# Setup a new connector (interactive prompt)
 sec-connector setup
+
+# Setup with explicit name and ID
+sec-connector setup --connection-name "PNC SEC Filings" -n pncsecfilings
 
 # Ingest filings for Apple
 sec-connector ingest -t AAPL -n mysecfilings
@@ -424,6 +469,12 @@ sec-connector ingest -t AAPL,MSFT,GOOG -n mysecfilings
 
 # Test mode (limited data)
 sec-connector ingest -t AAPL --test -n mysecfilings
+
+# Ingest with OCR for rotated-text images
+sec-connector ingest -t AAPL -n mysecfilings --ocr
+
+# Save upload payloads as JSON for inspection
+sec-connector ingest -t AAPL --test -n mysecfilings --save-payloads
 
 # Check status
 sec-connector status -n mysecfilings
@@ -449,6 +500,38 @@ sec-connector -v ingest -t AAPL -n mysecfilings
 
 # Use custom config file
 sec-connector -c /path/to/config.yaml ingest -t AAPL -n mysecfilings
+
+# Custom display name for Microsoft 365 Admin Center
+sec-connector ingest -t AAPL -n mysecfilings --connection-name "Apple SEC Filings"
+
+# OCR + save payloads + test mode (all flags combined)
+sec-connector ingest -t AAPL --test --ocr --save-payloads -n mysecfilings
+```
+
+### OCR for Rotated-Text Images
+
+SEC filings often contain financial tables where column headers are rendered as rotated images (appearing as `LOGO` in raw output). The OCR feature downloads these images and extracts the actual text.
+
+**Enable via config (persistent):**
+```yaml
+# config/config.yaml
+processing:
+  ocr_images: true
+```
+
+**Enable via CLI flag (per-run):**
+```powershell
+sec-connector ingest -t AAPL -n mysecfilings --ocr
+sec-connector resume -n mysecfilings --ocr
+```
+
+**Requirements**: Install one of the supported OCR backends:
+```powershell
+# Option 1: EasyOCR (recommended, pure Python)
+pip install easyocr
+
+# Option 2: pytesseract (requires Tesseract binary)
+pip install pytesseract
 ```
 
 ### Popular Ticker Symbols
@@ -521,6 +604,9 @@ sec-connector setup -n "my-sec-filings"  # Becomes: mysecfilings
 ```powershell
 # Resume failed uploads
 sec-connector resume -n mysecfilings
+
+# Resume with OCR if needed
+sec-connector resume -n mysecfilings --ocr
 ```
 
 #### 5. "maximum recursion depth exceeded"
@@ -606,6 +692,18 @@ sec-connector ingest -t AAPL -n mysecfilings
 
 **A**: Currently, use the reset command to delete all, then re-ingest what you need.
 
+### Q: What does the `--ocr` flag do?
+
+**A**: Many SEC financial tables have column headers rendered as rotated images (they show up as `LOGO` in the parsed output). The `--ocr` flag downloads those images from SEC.gov and runs OCR to recover the actual text (e.g., "Total Assets", "Net Income"). This significantly improves the quality of indexed content for financial tables. You can enable it permanently by setting `ocr_images: true` in `config/config.yaml`.
+
+### Q: What is the difference between `--connection-id` and `--connection-name`?
+
+**A**: The `--connection-id` (`-n`) is the alphanumeric identifier used by the Graph API (e.g., `pncsecfilings`). The `--connection-name` is the human-readable display name shown in the Microsoft 365 Admin Center (e.g., `PNC SEC Filings`). During interactive setup, both are derived from your input. Via CLI flags, you can set them independently.
+
+### Q: What does `--save-payloads` do?
+
+**A**: It saves the JSON payloads that would be uploaded to Microsoft Graph as files in `data/payloads/`. This is useful for inspecting the content before or after upload, debugging issues, or auditing what was sent to the Graph API.
+
 ---
 
 ## Support
@@ -621,4 +719,5 @@ sec-connector ingest -t AAPL -n mysecfilings
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1.0 | 2026-03 | Added OCR for rotated-text images (`--ocr` flag / `ocr_images` config), `--connection-name` option, `--save-payloads` option |
 | 1.0.0 | 2026-02 | Initial release |

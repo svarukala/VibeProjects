@@ -387,10 +387,20 @@ def clean_sec_text(text: str) -> str:
     return text
 
 
+def _build_filing_base_url(filing: FilingMetadata) -> str:
+    """Build the SEC base URL for a filing's directory (used to resolve image src paths).
+
+    Example: https://www.sec.gov/Archives/edgar/data/713676/000119312525052937/
+    """
+    accession_no_dashes = filing.accession_number.replace("-", "")
+    return f"https://www.sec.gov/Archives/edgar/data/{filing.cik}/{accession_no_dashes}/"
+
+
 def parse_document(
     file_path: Path,
     filing: FilingMetadata,
     document: DocumentInfo,
+    ocr_images: bool = False,
 ) -> Optional[ParsedDocument]:
     """Parse a downloaded document file.
 
@@ -398,6 +408,9 @@ def parse_document(
         file_path: Path to downloaded file
         filing: Filing metadata
         document: Document info
+        ocr_images: If True, download and OCR rotated-text images to recover
+                    text (e.g., vertical column headers rendered as images).
+                    Requires easyocr or pytesseract.
 
     Returns:
         ParsedDocument or None if parsing fails
@@ -408,13 +421,15 @@ def parse_document(
         logger.error(f"Failed to read {file_path}: {e}")
         return None
 
+    base_url = _build_filing_base_url(filing) if ocr_images else None
+
     if file_path.suffix.lower() in [".htm", ".html"]:
         content = clean_sec_text(content)
-        markdown = html_to_markdown(content)
+        markdown = html_to_markdown(content, base_url=base_url)
     elif file_path.suffix.lower() == ".txt":
         if "<html" in content.lower() or "<body" in content.lower():
             content = clean_sec_text(content)
-            markdown = html_to_markdown(content)
+            markdown = html_to_markdown(content, base_url=base_url)
         else:
             content = clean_sec_text(content)
             markdown = content

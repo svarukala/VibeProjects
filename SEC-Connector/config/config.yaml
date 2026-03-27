@@ -24,6 +24,7 @@ chunking:
 processing:
   concurrent_downloads: 5
   batch_size: 20
+  ocr_images: true  # Set true or use --ocr flag to OCR rotated-text images (requires easyocr or pytesseract)
 
 test_mode:
   max_filings: 2

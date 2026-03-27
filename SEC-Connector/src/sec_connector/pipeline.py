@@ -225,7 +225,7 @@ class IngestionPipeline:
 
                 all_chunks = []
                 for doc_info, doc_path in docs:
-                    parsed = parse_document(doc_path, filing, doc_info)
+                    parsed = parse_document(doc_path, filing, doc_info, ocr_images=self.config.processing.ocr_images)
                     if not parsed:
                         continue
 
@@ -338,7 +338,7 @@ class IngestionPipeline:
                     chunks_to_upload = []
 
                     for doc_info, doc_path in docs:
-                        parsed = parse_document(doc_path, filing, doc_info)
+                        parsed = parse_document(doc_path, filing, doc_info, ocr_images=self.config.processing.ocr_images)
                         if not parsed:
                             continue
 

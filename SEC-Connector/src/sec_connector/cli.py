@@ -155,8 +155,9 @@ def setup(ctx, connection_id: Optional[str], connection_name: Optional[str]):
 @click.option("--max-filings", type=int, help="Maximum filings per ticker")
 @click.option("--max-pages", type=int, help="Maximum pages per filing")
 @click.option("--save-payloads", is_flag=True, default=False, help="Save upload payloads as JSON files to data/payloads/")
+@click.option("--ocr", is_flag=True, default=False, help="Enable OCR for rotated-text images (requires easyocr or pytesseract)")
 @click.pass_context
-def ingest(ctx, tickers: str, connection_id: Optional[str], connection_name: Optional[str], test: bool, max_filings: Optional[int], max_pages: Optional[int], save_payloads: bool):
+def ingest(ctx, tickers: str, connection_id: Optional[str], connection_name: Optional[str], test: bool, max_filings: Optional[int], max_pages: Optional[int], save_payloads: bool, ocr: bool):
     """Ingest SEC filings for specified tickers."""
     config = ctx.obj["config"]
 
@@ -172,6 +173,9 @@ def ingest(ctx, tickers: str, connection_id: Optional[str], connection_name: Opt
     elif connection_name:
         apply_connection_config(config, connection_name=connection_name)
 
+    if ocr:
+        config.processing.ocr_images = True
+
     ticker_list = [t.strip().upper() for t in tickers.split(",")]
 
     if not ticker_list:
@@ -181,6 +185,8 @@ def ingest(ctx, tickers: str, connection_id: Optional[str], connection_name: Opt
     console.print(f"[bold]SEC Connector - Ingesting filings for: {', '.join(ticker_list)}[/]")
     console.print(f"[dim]Connection: {config.azure.connection_name} ({config.azure.connection_id})[/]")
 
+    if ocr:
+        console.print("[cyan]OCR enabled for rotated-text images[/]")
     if test:
         console.print("[yellow]Running in TEST MODE[/]")
 
@@ -204,8 +210,9 @@ def ingest(ctx, tickers: str, connection_id: Optional[str], connection_name: Opt
 @click.option("--connection-id", "-n", help="Connection ID for Graph connector")
 @click.option("--connection-name", help="Display name for the connector in Microsoft 365")
 @click.option("--save-payloads", is_flag=True, default=False, help="Save upload payloads as JSON files to data/payloads/")
+@click.option("--ocr", is_flag=True, default=False, help="Enable OCR for rotated-text images (requires easyocr or pytesseract)")
 @click.pass_context
-def resume(ctx, connection_id: Optional[str], connection_name: Optional[str], save_payloads: bool):
+def resume(ctx, connection_id: Optional[str], connection_name: Optional[str], save_payloads: bool, ocr: bool):
     """Resume interrupted processing."""
     config = ctx.obj["config"]
 
@@ -217,6 +224,9 @@ def resume(ctx, connection_id: Optional[str], connection_name: Optional[str], sa
         apply_connection_config(config, sanitize_connection_id(raw), connection_name or raw)
     elif connection_name:
         apply_connection_config(config, connection_name=connection_name)
+
+    if ocr:
+        config.processing.ocr_images = True
 
     console.print("[bold]Resuming interrupted processing...[/]")
     console.print(f"[dim]Connection: {config.azure.connection_name} ({config.azure.connection_id})[/]")

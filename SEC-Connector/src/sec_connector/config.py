@@ -45,6 +45,7 @@ class ProcessingConfig(BaseModel):
     """Processing configuration."""
     concurrent_downloads: int = 5
     batch_size: int = 20
+    ocr_images: bool = False  # Enable OCR for rotated-text images (requires easyocr or pytesseract)
 
 
 class TestModeConfig(BaseModel):
